@@ -12,10 +12,11 @@ export default function Home() {
   const [stage, setStage] = useState(1); // 1: User Type, 2: Age Group, 3: Cheating Level
 
   // Handler for progressing through stages
-  const handleNextStage = (value: string | number) => {
+  const handleNextStage = (value: string) => {
     if (stage === 1) setUserType(value);
     if (stage === 2) setAgeGroup(value);
     if (stage === 3) setCheatingLevel(value);
+    setStage((prev) => Math.min(prev + 1, 3)); // Ensure stage doesn't exceed 3
   };
 
   return (
