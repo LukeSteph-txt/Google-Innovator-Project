@@ -26,20 +26,3 @@
     "typescript": "^5.0.0"
   }
 }
-```
-
-5. For Vercel specifically, you might want to add a `vercel.json` file to specify the package manager:
-
-<antArtifact identifier="vercel-json" type="application/vnd.ant.code" title="Vercel Configuration" language="json">
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm run build",
-  "devCommand": "pnpm run dev"
-}
