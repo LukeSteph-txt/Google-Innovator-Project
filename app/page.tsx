@@ -17,6 +17,33 @@ const usStates = [
   "Wisconsin", "Wyoming", "District of Columbia"
 ];
 
+// Define question types
+interface BaseQuestion {
+  question: string;
+  options: string[];
+  setter: (value: string) => void;
+}
+
+interface DropdownQuestion extends BaseQuestion {
+  dropdown: true;
+}
+
+interface SliderQuestion extends BaseQuestion {
+  slider: true;
+  min: number;
+  max: number;
+}
+
+interface RegularQuestion extends BaseQuestion {
+  dropdown?: false;
+  slider?: false;
+}
+
+type Question = RegularQuestion | DropdownQuestion | SliderQuestion;
+
+// Define section type
+type SectionType = 'landing' | 'privacy' | 'bias' | 'learning' | 'environment' | 'results' | 'guidelines';
+
 export default function Home() {
   // State for tracking if user has started the process
   const [started, setStarted] = useState(false);
@@ -37,7 +64,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   
   // State for current section and question
-  type SectionType = 'landing' | 'privacy' | 'bias' | 'learning' | 'environment' | 'results' | 'guidelines';
   const [section, setSection] = useState<SectionType>('landing');
   const [questionIndex, setQuestionIndex] = useState(0);
 
@@ -46,6 +72,7 @@ export default function Home() {
     apiKey: process.env.OPENAI_API_KEY, 
     dangerouslyAllowBrowser: false
   });
+
   async function generatePolicy() {
     setLoading(true);
     try {
@@ -267,9 +294,8 @@ export default function Home() {
     }
   }
   
-
   // Questions organized by sections
-  const sections = {
+  const sections: Record<SectionType, Question[]> = {
     landing: [],
     privacy: [
       {
@@ -300,6 +326,7 @@ export default function Home() {
         slider: true,
         min: 1,
         max: 10,
+        options: [],
         setter: setEnglishProficiency
       }
     ],
@@ -315,7 +342,7 @@ export default function Home() {
         setter: setAiIncorporation
       }
     ],
-    guidelines: [], // No questions as per requirements
+    guidelines: [],
     environment: [
       {
         question: "How environmentally conscious is your campus?",
@@ -341,8 +368,9 @@ export default function Home() {
   // Function to handle next question or section
   const handleNext = (value: string) => {
     // Set the current question's answer
-    if (sections[section].length > 0 && questionIndex < sections[section].length) {
-      sections[section][questionIndex].setter(value);
+    const currentQuestion = getCurrentQuestion();
+    if (currentQuestion) {
+      currentQuestion.setter(value);
     }
     
     // Move to next question or section
@@ -352,7 +380,7 @@ export default function Home() {
       // Determine next section
       const sectionOrder: SectionType[] = ["landing", "privacy", "bias", "learning", "guidelines", "environment", "results"]; 
       const currentIndex = sectionOrder.indexOf(section);
-      const nextSection = sectionOrder[currentIndex + 1];
+      const nextSection = sectionOrder[currentIndex + 1] as SectionType;
       
       if (nextSection) {
         setSection(nextSection);
@@ -373,7 +401,7 @@ export default function Home() {
 
   // Get section title
   const getSectionTitle = () => {
-    const titles = {
+    const titles: Record<SectionType, string> = {
       landing: "Welcome to EducAIt",
       privacy: "Privacy Considerations",
       bias: "Bias Assessment",
@@ -382,15 +410,24 @@ export default function Home() {
       environment: "Environmental Impact",
       results: "Your AI Policy"
     };
-    return titles[section] || "";
+    return titles[section];
   };
 
   // Get current question
-  const getCurrentQuestion = () => {
-    if (sections[section].length > 0 && questionIndex < sections[section].length) {
+  const getCurrentQuestion = (): Question | null => {
+    if (sections[section] && sections[section].length > 0 && questionIndex < sections[section].length) {
       return sections[section][questionIndex];
     }
     return null;
+  };
+
+  // Type guard functions
+  const isSliderQuestion = (question: Question | null): question is SliderQuestion => {
+    return question !== null && 'slider' in question && question.slider === true;
+  };
+
+  const isDropdownQuestion = (question: Question | null): question is DropdownQuestion => {
+    return question !== null && 'dropdown' in question && question.dropdown === true;
   };
 
   // Handle slider change
@@ -442,65 +479,69 @@ export default function Home() {
           )}
 
           {/* Questions */}
-          {section !== "landing" && section !== "results" && getCurrentQuestion() && (
+          {section !== "landing" && section !== "results" && (
             <div className="flex flex-col items-center gap-6">
-              <h2 className="text-2xl font-semibold mb-4">{getCurrentQuestion().question}</h2>
-              
-              {/* Regular options */}
-              {!getCurrentQuestion().dropdown && !getCurrentQuestion().slider && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
-                  {getCurrentQuestion().options.map((option, i) => (
-                    <button
-                      key={i}
-                      className="bg-gray-700 text-white py-4 text-lg rounded-lg hover:bg-gray-600 transition-all"
-                      onClick={() => handleNext(option)}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              )}
-              
-              {/* Dropdown */}
-              {getCurrentQuestion().dropdown && (
-                <div className="w-full max-w-md">
-                  <select 
-                    className="w-full p-4 border rounded-lg text-lg"
-                    onChange={(e) => handleNext(e.target.value)}
-                    defaultValue=""
-                  >
-                    <option value="" disabled>Select a state</option>
-                    {getCurrentQuestion().options.map((option, i) => (
-                      <option key={i} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              
-              {/* Slider */}
-              {getCurrentQuestion().slider && (
-                <div className="w-full max-w-md">
-                  <div className="flex justify-between mb-2">
-                    <span>Low ({getCurrentQuestion().min})</span>
-                    <span>High ({getCurrentQuestion().max})</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min={getCurrentQuestion().min} 
-                    max={getCurrentQuestion().max}
-                    defaultValue={Math.floor((getCurrentQuestion().max + getCurrentQuestion().min) / 2)}
-                    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-                    onChange={(e) => {
-                      handleSliderChange(e);
-                      getCurrentQuestion().setter(`${e.target.value}/10`);
-                    }}
-                    onMouseUp={(e) => handleNext(e.target.value)}
-                    onTouchEnd={(e) => handleNext(e.target.value)}
-                  />
-                  <div className="mt-2 text-center text-lg font-semibold">
-                    Selected: <span id="sliderValue">{Math.floor((getCurrentQuestion().max + getCurrentQuestion().min) / 2)}</span>
-                  </div>
-                </div>
+              {getCurrentQuestion() && (
+                <>
+                  <h2 className="text-2xl font-semibold mb-4">{getCurrentQuestion()!.question}</h2>
+                  
+                  {/* Regular options */}
+                  {!isDropdownQuestion(getCurrentQuestion()) && !isSliderQuestion(getCurrentQuestion()) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+                      {getCurrentQuestion()!.options.map((option, i) => (
+                        <button
+                          key={i}
+                          className="bg-gray-700 text-white py-4 text-lg rounded-lg hover:bg-gray-600 transition-all"
+                          onClick={() => handleNext(option)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Dropdown */}
+                  {isDropdownQuestion(getCurrentQuestion()) && (
+                    <div className="w-full max-w-md">
+                      <select 
+                        className="w-full p-4 border rounded-lg text-lg"
+                        onChange={(e) => handleNext(e.target.value)}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>Select a state</option>
+                        {getCurrentQuestion()!.options.map((option, i) => (
+                          <option key={i} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  
+                  {/* Slider */}
+                  {isSliderQuestion(getCurrentQuestion()) && (
+                    <div className="w-full max-w-md">
+                      <div className="flex justify-between mb-2">
+                        <span>Low ({getCurrentQuestion()!.min})</span>
+                        <span>High ({getCurrentQuestion()!.max})</span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min={getCurrentQuestion()!.min} 
+                        max={getCurrentQuestion()!.max}
+                        defaultValue={Math.floor((getCurrentQuestion()!.max + getCurrentQuestion()!.min) / 2)}
+                        className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+                        onChange={(e) => {
+                          handleSliderChange(e);
+                          getCurrentQuestion()!.setter(`${e.target.value}/10`);
+                        }}
+                        onMouseUp={(e) => handleNext((e.target as HTMLInputElement).value)}
+                        onTouchEnd={(e) => handleNext((e.target as HTMLInputElement).value)}
+                      />
+                      <div className="mt-2 text-center text-lg font-semibold">
+                        Selected: <span id="sliderValue">{Math.floor((getCurrentQuestion()!.max + getCurrentQuestion()!.min) / 2)}</span>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -520,7 +561,7 @@ export default function Home() {
                       className="bg-gray-700 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-all"
                       onClick={() => {
                         // Reset to start
-                        setSection("landing" as SectionType);
+                        setSection("landing");
                         setQuestionIndex(0);
                         setResponse("");
                       }}
@@ -563,8 +604,16 @@ export default function Home() {
                   className="bg-gray-600 h-2.5 rounded-full transition-all duration-500" 
                   style={{ 
                     width: `${(() => {
-                      const sectionValues = { privacy: 20, bias: 40, learning: 60, guidelines: 80, environment: 80, results: 100 };
-                      return sectionValues[section] || 0;
+                      const sectionValues: Record<SectionType, number> = { 
+                        landing: 0,
+                        privacy: 20, 
+                        bias: 40, 
+                        learning: 60, 
+                        guidelines: 80, 
+                        environment: 80, 
+                        results: 100 
+                      };
+                      return sectionValues[section];
                     })()}%` 
                   }}
                 ></div>
