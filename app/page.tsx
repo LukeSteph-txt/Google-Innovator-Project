@@ -42,10 +42,9 @@ export default function Home() {
 
   // OpenAI configuration
   const openai = new OpenAI({ 
-    apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY, 
-    dangerouslyAllowBrowser: true
+    apiKey: process.env.OPENAI_API_KEY, 
+    dangerouslyAllowBrowser: false
   });
-
   async function generatePolicy() {
     setLoading(true);
     try {
