@@ -37,7 +37,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   
   // State for current section and question
-  type SectionType = 'landing' | 'privacy' | 'bias' | 'learning' | 'environment' | 'results';
+  type SectionType = 'landing' | 'privacy' | 'bias' | 'learning' | 'environment' | 'results' | 'guidelines';
   const [section, setSection] = useState<SectionType>('landing');
   const [questionIndex, setQuestionIndex] = useState(0);
 
@@ -348,7 +348,7 @@ export default function Home() {
       setQuestionIndex(questionIndex + 1);
     } else {
       // Determine next section
-      const sectionOrder = ["landing", "privacy", "bias", "learning", "guidelines", "environment", "results"];
+      const sectionOrder: SectionType[] = ["landing", "privacy", "bias", "learning", "guidelines", "environment", "results"]; 
       const currentIndex = sectionOrder.indexOf(section);
       const nextSection = sectionOrder[currentIndex + 1];
       
@@ -358,7 +358,7 @@ export default function Home() {
         
         // Skip guidelines section as it has no questions
         if (nextSection === "guidelines" && sections[nextSection].length === 0) {
-          setSection(sectionOrder[currentIndex + 2]);
+          setSection(sectionOrder[currentIndex + 2] as SectionType);
         }
         
         // Generate policy when reaching results
@@ -515,7 +515,7 @@ export default function Home() {
                       className="bg-gray-700 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-all"
                       onClick={() => {
                         // Reset to start
-                        setSection("landing");
+                        setSection("landing" as SectionType);
                         setQuestionIndex(0);
                         setResponse("");
                       }}
