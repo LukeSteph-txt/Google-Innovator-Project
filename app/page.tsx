@@ -247,7 +247,6 @@ export default function Home() {
         - Implementation Strategies
         - Monitoring and Compliance
         - Future Adaptability
-        - End with a smiley face :)
       `;
       
       const completion = await openai.chat.completions.create({
