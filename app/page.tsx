@@ -254,9 +254,11 @@ export default function Home() {
         model: "gpt-4o-mini",
       });
       
-      if (completion.choices && completion.choices.length > 0) {
-        setResponse(completion.choices[0].message?.content || "No response received");
-      } 
+      if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+        setResponse(completion.choices[0].message.content);
+      } else {
+        setResponse("No valid response received from OpenAI.");
+      }
     } catch (error) {
       console.error("Error generating policy:", error);
       setResponse("An error occurred while generating the policy. Please try again.");
