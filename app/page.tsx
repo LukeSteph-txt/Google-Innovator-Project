@@ -395,7 +395,10 @@ export default function Home() {
 
   // Handle slider change
   const handleSliderChange = (e: ChangeEvent<HTMLInputElement>) => {
-    document.getElementById("sliderValue").textContent = e.target.value;
+    const sliderValueElement = document.getElementById("sliderValue");
+    if (sliderValueElement) {
+      sliderValueElement.textContent = e.target.value;
+    }
   };
 
   return (
