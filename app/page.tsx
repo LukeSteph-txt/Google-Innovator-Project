@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import Head from "next/head";
 import OpenAI from "openai";
 
@@ -392,7 +392,7 @@ export default function Home() {
   };
 
   // Handle slider change
-  const handleSliderChange = (e) => {
+  const handleSliderChange = (e: ChangeEvent<HTMLInputElement>) => {
     document.getElementById("sliderValue").textContent = e.target.value;
   };
 
