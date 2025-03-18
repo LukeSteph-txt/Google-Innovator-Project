@@ -337,7 +337,7 @@ export default function Home() {
   };
 
   // Function to handle next question or section
-  const handleNext = (value: string | number | boolean) => {
+  const handleNext = (value: string) => {
     // Set the current question's answer
     if (sections[section].length > 0 && questionIndex < sections[section].length) {
       sections[section][questionIndex].setter(value);
