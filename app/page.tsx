@@ -37,7 +37,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   
   // State for current section and question
-  const [section, setSection] = useState("landing");
+  type SectionType = 'landing' | 'privacy' | 'bias' | 'learning' | 'environment' | 'results';
+  const [section, setSection] = useState<SectionType>('landing');
   const [questionIndex, setQuestionIndex] = useState(0);
 
   // OpenAI configuration
