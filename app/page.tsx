@@ -1,3 +1,4 @@
+"use client";
 
 import Image from "next/image";
 import { ChangeEvent, useState } from "react";
@@ -68,10 +69,6 @@ export default function Home() {
   const [section, setSection] = useState<SectionType>('landing');
   const [questionIndex, setQuestionIndex] = useState(0);
 
-  // OpenAI configuration
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-  });
 
   async function generatePolicy() {
     setLoading(true);
@@ -276,22 +273,29 @@ export default function Home() {
         - Future Adaptability
       `;
       
-      const completion = await openai.chat.completions.create({
-        messages: [{ role: "user", content: prompt }],
-        model: "gpt-4o-mini",
-      });
-      
-      if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
-        setResponse(completion.choices[0].message.content);
-      } else {
-        setResponse("No valid response received from OpenAI.");
-      }
-    } catch (error) {
-      console.error("Error generating policy:", error);
-      setResponse("An error occurred while generating the policy. Please try again.");
-    } finally {
-      setLoading(false);
+      const response = await fetch('/api/openai', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt }),
+    });
+    
+    const data = await response.json();
+    
+    if (data.content) {
+      setResponse(data.content);
+    } else if (data.error) {
+      setResponse(`Error: ${data.error}`);
+    } else {
+      setResponse("No valid response received from the API.");
     }
+  } catch (error) {
+    console.error("Error generating policy:", error);
+    setResponse("An error occurred while generating the policy. Please try again.");
+  } finally {
+    setLoading(false);
+  }
   }
   
   // Questions organized by sections
