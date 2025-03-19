@@ -70,9 +70,8 @@ export default function Home() {
   const [questionIndex, setQuestionIndex] = useState(0);
 
   // OpenAI configuration
-  const openai = new OpenAI({ 
-    apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY, // Fixed: Use NEXT_PUBLIC_ prefix for client-side
-    dangerouslyAllowBrowser: true // Fixed: Enable for client-side usage
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
   });
 
   async function generatePolicy() {
