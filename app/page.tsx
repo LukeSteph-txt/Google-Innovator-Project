@@ -26,12 +26,14 @@ interface BaseQuestion {
 
 interface DropdownQuestion extends BaseQuestion {
   dropdown: true;
+  slider?: never;
 }
 
 interface SliderQuestion extends BaseQuestion {
   slider: true;
   min: number;
   max: number;
+  dropdown?: never;
 }
 
 interface RegularQuestion extends BaseQuestion {
@@ -69,8 +71,8 @@ export default function Home() {
 
   // OpenAI configuration
   const openai = new OpenAI({ 
-    apiKey: process.env.OPENAI_API_KEY, 
-    dangerouslyAllowBrowser: false
+    apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY, // Fixed: Use NEXT_PUBLIC_ prefix for client-side
+    dangerouslyAllowBrowser: true // Fixed: Enable for client-side usage
   });
 
   async function generatePolicy() {
@@ -439,194 +441,191 @@ export default function Home() {
   };
 
   return (
-    <>
-      <Head>
-        <title>EducAIt - AI Policy Generator</title>
-      </Head>
+    <div className="overflow-x-hidden min-h-screen flex flex-col items-center justify-center p-4">
+      {/* Navigation Bar */}
+      <nav className="bg-grey-100 text-black p-4 fixed top-0 left-1/2 transform -translate-x-1/2 w-full max-w-4xl rounded-b-2xl shadow-lg">
+        <div className="flex justify-evenly">
+          <button className="hover:bg-gray-100 px-4 py-1 rounded">About Us</button>
+          <button className="hover:bg-gray-100 px-4 py-1 rounded">Documentation</button>
+          <button className="hover:bg-gray-100 px-4 py-1 rounded">Contact Us</button>
+        </div>
+      </nav>
 
-      <div className="overflow-x-hidden min-h-screen flex flex-col items-center justify-center p-4">
-        {/* Navigation Bar */}
-        <nav className="bg-grey-100 text-black p-4 fixed top-0 left-1/2 transform -translate-x-1/2 w-full max-w-4xl rounded-b-2xl shadow-lg">
-          <div className="flex justify-evenly">
-            <button className="hover:bg-gray-100 px-4 py-1 rounded">About Us</button>
-            <button className="hover:bg-gray-100 px-4 py-1 rounded">Documentation</button>
-            <button className="hover:bg-gray-100 px-4 py-1 rounded">Contact Us</button>
+      <div className="text-center max-w-4xl w-full mt-20 mb-20">
+        {/* Title based on current section */}
+        <h1 className="text-4xl md:text-6xl font-bold mb-8"
+            style={{ textShadow: "3px 3px 6px rgba(0, 0, 0, .3)" }}>
+          {getSectionTitle()}
+        </h1>
+
+        {/* Landing Page */}
+        {section === "landing" && (
+          <div className="flex flex-col items-center gap-6">
+            <p className="text-xl mb-8">
+              Welcome to EducAIt, your comprehensive tool for drafting customized AI policies
+              for educational institutions. Answer a few questions about your needs to generate
+              a tailored policy outline.
+            </p>
+            <button
+              className="w-64 bg-gray-700 text-white py-4 text-lg rounded-lg hover:bg-gray-600 transition-all"
+              onClick={startProcess}
+            >
+              Draft Policy
+            </button>
           </div>
-        </nav>
+        )}
 
-        <div className="text-center max-w-4xl w-full mt-20 mb-20">
-          {/* Title based on current section */}
-          <h1 className="text-4xl md:text-6xl font-bold mb-8"
-              style={{ textShadow: "3px 3px 6px rgba(0, 0, 0, .3)" }}>
-            {getSectionTitle()}
-          </h1>
-
-          {/* Landing Page */}
-          {section === "landing" && (
-            <div className="flex flex-col items-center gap-6">
-              <p className="text-xl mb-8">
-                Welcome to EducAIt, your comprehensive tool for drafting customized AI policies
-                for educational institutions. Answer a few questions about your needs to generate
-                a tailored policy outline.
-              </p>
-              <button
-                className="w-64 bg-gray-700 text-white py-4 text-lg rounded-lg hover:bg-gray-600 transition-all"
-                onClick={startProcess}
-              >
-                Draft Policy
-              </button>
-            </div>
-          )}
-
-          {/* Questions */}
-          {section !== "landing" && section !== "results" && (
-            <div className="flex flex-col items-center gap-6">
-              {getCurrentQuestion() && (
-                <>
-                  <h2 className="text-2xl font-semibold mb-4">{getCurrentQuestion()!.question}</h2>
-                  
-                  {/* Regular options */}
-                  {!isDropdownQuestion(getCurrentQuestion()) && !isSliderQuestion(getCurrentQuestion()) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
-                      {getCurrentQuestion()!.options.map((option, i) => (
-                        <button
-                          key={i}
-                          className="bg-gray-700 text-white py-4 text-lg rounded-lg hover:bg-gray-600 transition-all"
-                          onClick={() => handleNext(option)}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Dropdown */}
-                  {isDropdownQuestion(getCurrentQuestion()) && (
-                    <div className="w-full max-w-md">
-                      <select 
-                        className="w-full p-4 border rounded-lg text-lg"
-                        onChange={(e) => handleNext(e.target.value)}
-                        defaultValue=""
+        {/* Questions */}
+        {section !== "landing" && section !== "results" && (
+          <div className="flex flex-col items-center gap-6">
+            {getCurrentQuestion() && (
+              <>
+                <h2 className="text-2xl font-semibold mb-4">{getCurrentQuestion()!.question}</h2>
+                
+                {/* Regular options */}
+                {!isDropdownQuestion(getCurrentQuestion()) && !isSliderQuestion(getCurrentQuestion()) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+                    {getCurrentQuestion()!.options.map((option, i) => (
+                      <button
+                        key={i}
+                        className="bg-gray-700 text-white py-4 text-lg rounded-lg hover:bg-gray-600 transition-all"
+                        onClick={() => handleNext(option)}
                       >
-                        <option value="" disabled>Select a state</option>
-                        {getCurrentQuestion()!.options.map((option, i) => (
-                          <option key={i} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  
-                  {/* Slider */}
-                  {isSliderQuestion(getCurrentQuestion()) && (
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Dropdown */}
+                {isDropdownQuestion(getCurrentQuestion()) && (
+                  <div className="w-full max-w-md">
+                    <select 
+                      className="w-full p-4 border rounded-lg text-lg"
+                      onChange={(e) => handleNext(e.target.value)}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Select a state</option>
+                      {getCurrentQuestion()!.options.map((option, i) => (
+                        <option key={i} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                
+                {/* Slider */}
+                {isSliderQuestion(getCurrentQuestion()) && (() => {
+                  const question = getCurrentQuestion() as SliderQuestion;
+                  return (
                     <div className="w-full max-w-md">
                       <div className="flex justify-between mb-2">
-                        <span>Low ({getCurrentQuestion()!.min})</span>
-                        <span>High ({getCurrentQuestion()!.max})</span>
+                        <span>Low ({question.min})</span>
+                        <span>High ({question.max})</span>
                       </div>
                       <input 
                         type="range" 
-                        min={getCurrentQuestion()!.min} 
-                        max={getCurrentQuestion()!.max}
-                        defaultValue={Math.floor((getCurrentQuestion()!.max + getCurrentQuestion()!.min) / 2)}
+                        min={question.min} 
+                        max={question.max}
+                        defaultValue={Math.floor((question.max + question.min) / 2)}
                         className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer"
                         onChange={(e) => {
                           handleSliderChange(e);
-                          getCurrentQuestion()!.setter(`${e.target.value}/10`);
+                          question.setter(`${e.target.value}/10`);
                         }}
-                        onMouseUp={(e) => handleNext((e.target as HTMLInputElement).value)}
-                        onTouchEnd={(e) => handleNext((e.target as HTMLInputElement).value)}
+                        onMouseUp={(e) => handleNext((e.target as HTMLInputElement).value + "/10")}
+                        onTouchEnd={(e) => handleNext((e.target as HTMLInputElement).value + "/10")}
                       />
                       <div className="mt-2 text-center text-lg font-semibold">
-                        Selected: <span id="sliderValue">{Math.floor((getCurrentQuestion()!.max + getCurrentQuestion()!.min) / 2)}</span>
+                        Selected: <span id="sliderValue">{Math.floor((question.max + question.min) / 2)}</span>
                       </div>
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+                  );
+                })()}
+              </>
+            )}
+          </div>
+        )}
 
-          {/* Results Page */}
-          {section === "results" && (
-            <div className="flex flex-col items-center gap-6 w-full">
-              {loading ? (
-                <div className="text-xl">Generating your AI policy...</div>
-              ) : (
-                <>
-                  <div className="border rounded-lg p-6 max-h-96 overflow-y-auto w-full bg-white shadow-md">
-                    <div className="whitespace-pre-line">{response}</div>
-                  </div>
-                  <div className="flex gap-4">
-                    <button
-                      className="bg-gray-700 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-all"
-                      onClick={() => {
-                        // Reset to start
-                        setSection("landing");
-                        setQuestionIndex(0);
-                        setResponse("");
-                      }}
-                    >
-                      Start Over
-                    </button>
-                    <button
-                      className="bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-500 transition-all"
-                      onClick={() => {
-                        // Download functionality
-                        const element = document.createElement("a");
-                        const file = new Blob([response], {type: 'text/plain'});
-                        element.href = URL.createObjectURL(file);
-                        element.download = "AI_Policy_Document.txt";
-                        document.body.appendChild(element);
-                        element.click();
-                        document.body.removeChild(element);
-                      }}
-                    >
-                      Download Policy
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+        {/* Results Page */}
+        {section === "results" && (
+          <div className="flex flex-col items-center gap-6 w-full">
+            {loading ? (
+              <div className="text-xl">Generating your AI policy...</div>
+            ) : (
+              <>
+                <div className="border rounded-lg p-6 max-h-96 overflow-y-auto w-full bg-white shadow-md">
+                  <div className="whitespace-pre-line">{response}</div>
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    className="bg-gray-700 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-all"
+                    onClick={() => {
+                      // Reset to start
+                      setSection("landing");
+                      setQuestionIndex(0);
+                      setResponse("");
+                    }}
+                  >
+                    Start Over
+                  </button>
+                  <button
+                    className="bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-500 transition-all"
+                    onClick={() => {
+                      // Download functionality
+                      const element = document.createElement("a");
+                      const file = new Blob([response], {type: 'text/plain'});
+                      element.href = URL.createObjectURL(file);
+                      element.download = "AI_Policy_Document.txt";
+                      document.body.appendChild(element);
+                      element.click();
+                      document.body.removeChild(element);
+                    }}
+                  >
+                    Download Policy
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
-          {/* Progress indicator */}
-          {section !== "landing" && section !== "results" && (
-            <div className="mt-12 w-full max-w-2xl mx-auto">
-              <div className="flex justify-between mb-2 text-sm">
-                <span>Privacy</span>
-                <span>Bias</span>
-                <span>Learning</span>
-                <span>Environment</span>
-                <span>Results</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className="bg-gray-600 h-2.5 rounded-full transition-all duration-500" 
-                  style={{ 
-                    width: `${(() => {
-                      const sectionValues: Record<SectionType, number> = { 
-                        landing: 0,
-                        privacy: 20, 
-                        bias: 40, 
-                        learning: 60, 
-                        guidelines: 80, 
-                        environment: 80, 
-                        results: 100 
-                      };
-                      return sectionValues[section];
-                    })()}%` 
-                  }}
-                ></div>
-              </div>
+        {/* Progress indicator */}
+        {section !== "landing" && section !== 'results' && (
+          <div className="mt-12 w-full max-w-2xl mx-auto">
+            <div className="flex justify-between mb-2 text-sm">
+              <span>Privacy</span>
+              <span>Bias</span>
+              <span>Learning</span>
+              <span>Environment</span>
+              <span>Results</span>
             </div>
-          )}
-        </div>
-
-        {/* Logo */}
-        <div className="fixed bottom-0 left-0 p-4">
-          <Image src="/logo.png" alt="EducAIt logo" width={150} height={150} priority />
-        </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-gray-600 h-2.5 rounded-full transition-all duration-500" 
+                style={{ 
+                  width: `${(() => {
+                    const sectionValues: Record<SectionType, number> = { 
+                      landing: 0,
+                      privacy: 20, 
+                      bias: 40, 
+                      learning: 60, 
+                      guidelines: 80, 
+                      environment: 80, 
+                      results: 100 
+                    };
+                    return sectionValues[section];
+                  })()}%` 
+                }}
+              ></div>
+            </div>
+          </div>
+        )}
       </div>
-    </>
+
+      {/* Logo */}
+      <div className="fixed bottom-0 left-0 p-4">
+        <Image src="/logo.png" alt="EducAIt logo" width={150} height={150} priority />
+      </div>
+    </div>
   );
 }
