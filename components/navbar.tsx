@@ -1,0 +1,36 @@
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Linkedin } from "lucide-react"
+
+export default function Navbar() {
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center justify-between px-4">
+        <Link href="/" className="flex items-center space-x-2">
+          <span className="font-bold">EducAIt</span>
+        </Link>
+        <nav className="flex items-center space-x-6 text-sm font-medium">
+          <Link href="#solutions" className="transition-colors hover:text-primary">
+            Solutions
+          </Link>
+          <Link href="#about-us" className="transition-colors hover:text-primary">
+            About Us
+          </Link>
+          <Link href="#mission" className="transition-colors hover:text-primary">
+            Mission
+          </Link>
+        </nav>
+        <div className="flex items-center space-x-4">
+          <Link href="https://www.linkedin.com/company/mvhs-principal-s-tech-internship" target="_blank" rel="noreferrer">
+            <Button variant="ghost" size="icon">
+              <Linkedin className="h-4 w-4" />
+              <span className="sr-only">GitHub</span>
+            </Button>
+          </Link>
+          <Button variant="ghost" size="sm">Contact</Button>
+          <Link href="/policy-generator"><Button size="sm">Generate Now</Button></Link>
+        </div>
+      </div>
+    </header>
+  )
+}
