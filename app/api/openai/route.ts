@@ -7,12 +7,20 @@ export async function POST(request: NextRequest) {
     apiKey: process.env.OPENAI_API_KEY
   });
   
-  const { prompt } = await request.json();
+  const { systemPrompt, prompt } = await request.json();
   
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [{ role: "user", content: prompt }],
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 5000,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
     });
     
     return NextResponse.json(response.choices[0].message);

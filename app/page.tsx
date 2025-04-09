@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ChangeEvent, useState } from "react";
 import Head from "next/head";
 import OpenAI from "openai";
+import ReactMarkdown from 'react-markdown';
 
 // List of US states for dropdown
 const usStates = [
@@ -227,10 +228,13 @@ export default function Home() {
         })()
       };
   
+
+      const systemPrompt = `
+        You are a tool that helps educators outline and format policy towards AI based on the following comprehensive analysis. Make sure to utilize all the information provided to you.
+      `;
+
       // Combine all contexts into a comprehensive prompt
       const prompt = `
-        You are a tool that helps educators outline and format policy towards AI based on the following comprehensive analysis:
-        
         POLICY PARAMETERS:
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
@@ -278,7 +282,7 @@ export default function Home() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ systemPrompt, prompt }),
     });
     
     const data = await response.json();
@@ -556,7 +560,11 @@ export default function Home() {
             ) : (
               <>
                 <div className="border rounded-lg p-6 max-h-96 overflow-y-auto w-full bg-white shadow-md">
-                  <div className="whitespace-pre-line">{response}</div>
+                  <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none">
+                    <ReactMarkdown>
+                      {response}
+                    </ReactMarkdown>
+                  </div>
                 </div>
                 <div className="flex gap-4">
                   <button
