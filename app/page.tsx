@@ -2,6 +2,7 @@ import Navbar from "@/components/navbar"
 import Hero from "@/components/hero"
 import Features from "@/components/features"
 import TeamCarousel from "@/components/TeamCarousel"
+import AboutUs from "@/components/AboutUs"
 import CTA from "@/components/cta"
 import Footer from "@/components/footer"
 
@@ -18,9 +19,18 @@ export default function Home() {
       <div className="relative z-10">
         <Navbar />
         <Hero />
-        <Features />
-        <TeamCarousel />
-        <CTA />
+        <div id="solutions">
+          <Features />
+        </div>
+        <div id="team">
+          <TeamCarousel />
+        </div>
+        <div id="about-us">
+          <AboutUs />
+        </div>
+        <div>
+          <CTA />
+        </div>
         <Footer />
       </div>
     </div>

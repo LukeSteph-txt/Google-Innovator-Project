@@ -13,11 +13,11 @@ export default function Navbar() {
           <Link href="#solutions" className="transition-colors hover:text-primary">
             Solutions
           </Link>
+          <Link href="#team" className="transition-colors hover:text-primary">
+            Meet the Team
+          </Link>
           <Link href="#about-us" className="transition-colors hover:text-primary">
             About Us
-          </Link>
-          <Link href="#mission" className="transition-colors hover:text-primary">
-            Mission
           </Link>
         </nav>
         <div className="flex items-center space-x-4">

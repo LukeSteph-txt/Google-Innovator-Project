@@ -19,8 +19,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/resources" className="text-muted-foreground transition-colors hover:text-primary">
-                  Educational Resources
+                <Link href="#solutions" className="text-muted-foreground transition-colors hover:text-primary">
+                  Solutions
                 </Link>
               </li>
             </ul>
@@ -29,13 +29,13 @@ export default function Footer() {
             <h3 className="text-sm font-medium">Company</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/about" className="text-muted-foreground transition-colors hover:text-primary">
-                  About Us
+                <Link href="#team" className="text-muted-foreground transition-colors hover:text-primary">
+                  Meet the Team
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-muted-foreground transition-colors hover:text-primary">
-                  Contact
+                <Link href="#about-us" className="text-muted-foreground transition-colors hover:text-primary">
+                  About Us
                 </Link>
               </li>
             </ul>
