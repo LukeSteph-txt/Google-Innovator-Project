@@ -8,7 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import ReactMarkdown from 'react-markdown';
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, ArrowLeft } from "lucide-react";
 
 // List of US states for dropdown
 const usStates = [
@@ -410,6 +410,24 @@ export default function PolicyGenerator() {
     }
   };
 
+  // Function to handle going back to previous question or section
+  const handleBack = () => {
+    if (questionIndex > 0) {
+      setQuestionIndex(questionIndex - 1);
+    } else {
+      // Go back to previous section
+      const sectionOrder: SectionType[] = ["landing", "privacy", "bias", "learning", "guidelines", "environment", "results"];
+      const currentIndex = sectionOrder.indexOf(section);
+      const prevSection = sectionOrder[currentIndex - 1] as SectionType;
+      
+      if (prevSection) {
+        setSection(prevSection);
+        // Set question index to last question of previous section
+        setQuestionIndex(sections[prevSection].length - 1);
+      }
+    }
+  };
+
   // Get section title
   const getSectionTitle = () => {
     const titles: Record<SectionType, string> = {
@@ -513,7 +531,19 @@ export default function PolicyGenerator() {
       {section !== "landing" && section !== "results" && (
         <Card className="mx-auto max-w-2xl">
           <CardHeader>
-            <CardTitle>{getSectionTitle()}</CardTitle>
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBack}
+                className="text-muted-foreground hover:text-primary"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <CardTitle>{getSectionTitle()}</CardTitle>
+              <div className="w-[70px]" /> {/* Spacer for alignment */}
+            </div>
             <CardDescription>
               {getCurrentQuestion()?.question}
             </CardDescription>
