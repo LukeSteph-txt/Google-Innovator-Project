@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import ReactMarkdown from 'react-markdown';
 import { Download, RefreshCw, ArrowLeft } from "lucide-react";
+import Navbar from "@/components/navbar";
 
 // List of US states for dropdown
 const usStates = [
@@ -468,199 +469,211 @@ export default function PolicyGenerator() {
   };
 
   return (
-    <div className="container max-w-5xl py-10">
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold tracking-tight">AI Policy Generator</h1>
-        <p className="mt-2 text-muted-foreground">
-          Create a customized AI policy for your educational institution
-        </p>
+    <div className="relative min-h-screen">
+      {/* Background gradients */}
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
+        <div className="absolute right-0 top-0 h-[500px] w-[500px] bg-blue-500/10 blur-[100px]" />
+        <div className="absolute bottom-0 left-0 h-[500px] w-[500px] bg-purple-500/10 blur-[100px]" />
       </div>
 
-      {/* Progress indicator */}
-      {section !== "landing" && section !== 'results' && (
-        <div className="mb-8">
-          <div className="flex justify-between mb-2 text-sm">
-            <span>Privacy</span>
-            <span>Bias</span>
-            <span>Learning</span>
-            <span>Environment</span>
-            <span>Results</span>
+      <div className="relative z-10">
+        <Navbar />
+        <div className="container max-w-5xl py-10">
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl font-bold tracking-tight">AI Policy Generator</h1>
+            <p className="mt-2 text-muted-foreground">
+              Create a customized AI policy for your educational institution
+            </p>
           </div>
-          <Progress 
-            value={(() => {
-              const sectionValues: Record<SectionType, number> = { 
-                landing: 0,
-                privacy: 20, 
-                bias: 40, 
-                learning: 60, 
-                guidelines: 80, 
-                environment: 80, 
-                results: 100 
-              };
-              return sectionValues[section];
-            })()} 
-            className="h-2"
-          />
-        </div>
-      )}
 
-      {/* Landing Page */}
-      {section === "landing" && (
-        <Card className="mx-auto max-w-2xl">
-          <CardHeader>
-            <CardTitle>Welcome to EducAIt</CardTitle>
-            <CardDescription>
-              Welcome to EducAIt, your comprehensive tool for drafting customized AI policies
-              for educational institutions. Answer a few questions about your needs to generate
-              a tailored policy outline.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button 
-              className="w-full" 
-              size="lg" 
-              onClick={startProcess}
-            >
-              Start Creating Your Policy
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
-
-      {/* Questions */}
-      {section !== "landing" && section !== "results" && (
-        <Card className="mx-auto max-w-2xl">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="text-muted-foreground hover:text-primary"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-              <CardTitle>{getSectionTitle()}</CardTitle>
-              <div className="w-[70px]" /> {/* Spacer for alignment */}
+          {/* Progress indicator */}
+          {section !== 'landing' && section !== 'results' && (
+            <div className="mb-8">
+              <div className="flex justify-between mb-2 text-sm">
+                <span>Privacy</span>
+                <span>Bias</span>
+                <span>Learning</span>
+                <span>Environment</span>
+                <span>Results</span>
+              </div>
+              <Progress 
+                value={(() => {
+                  const sectionValues: Record<SectionType, number> = { 
+                    landing: 0,
+                    privacy: 20, 
+                    bias: 40, 
+                    learning: 60, 
+                    guidelines: 80, 
+                    environment: 80, 
+                    results: 100 
+                  };
+                  return sectionValues[section];
+                })()} 
+                className="h-2"
+              />
             </div>
-            <CardDescription>
-              {getCurrentQuestion()?.question}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Regular options */}
-            {!isDropdownQuestion(getCurrentQuestion()) && !isSliderQuestion(getCurrentQuestion()) && (
-              <div className="grid grid-cols-1 gap-4">
-                {getCurrentQuestion()!.options.map((option, i) => (
-                  <Button
-                    key={i}
-                    variant="outline"
-                    className="justify-start h-auto py-4 text-left"
-                    onClick={() => handleNext(option)}
-                  >
-                    {option}
-                  </Button>
-                ))}
-              </div>
-            )}
-            
-            {/* Dropdown */}
-            {isDropdownQuestion(getCurrentQuestion()) && (
-              <Select onValueChange={handleNext}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a state" />
-                </SelectTrigger>
-                <SelectContent>
-                  {getCurrentQuestion()!.options.map((option, i) => (
-                    <SelectItem key={i} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            
-            {/* Slider */}
-            {isSliderQuestion(getCurrentQuestion()) && (() => {
-              const question = getCurrentQuestion() as SliderQuestion;
-              return (
-                <div className="space-y-4">
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Low ({question.min})</span>
-                    <span>High ({question.max})</span>
-                  </div>
-                  <Slider 
-                    defaultValue={[Math.floor((question.max + question.min) / 2)]}
-                    min={question.min}
-                    max={question.max}
-                    step={1}
-                    onValueChange={handleSliderChange}
-                    onValueCommit={(value) => handleNext(value[0] + "/10")}
-                    className="py-4"
-                  />
-                  <div className="text-center text-sm font-medium">
-                    Selected: <span id="sliderValue">{Math.floor((question.max + question.min) / 2)}</span>
-                  </div>
-                </div>
-              );
-            })()}
-          </CardContent>
-        </Card>
-      )}
+          )}
 
-      {/* Results Page */}
-      {section === "results" && (
-        <Card className="mx-auto max-w-4xl">
-          <CardHeader>
-            <CardTitle>Your AI Policy</CardTitle>
-            <CardDescription>
-              Based on your responses, we've generated a customized AI policy for your educational institution.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                <p className="text-muted-foreground">Generating your AI policy...</p>
-              </div>
-            ) : (
-              <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert">
-                <ReactMarkdown>
-                  {response}
-                </ReactMarkdown>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                // Reset to start
-                setSection("landing");
-                setQuestionIndex(0);
-                setResponse("");
-              }}
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Start Over
-            </Button>
-            <Button 
-              onClick={() => {
-                // Download functionality
-                const element = document.createElement("a");
-                const file = new Blob([response], {type: 'text/plain'});
-                element.href = URL.createObjectURL(file);
-                element.download = "AI_Policy_Document.txt";
-                document.body.appendChild(element);
-                element.click();
-                document.body.removeChild(element);
-              }}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download Policy
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
+          {/* Landing Page */}
+          {section === 'landing' && (
+            <Card className="mx-auto max-w-2xl">
+              <CardHeader>
+                <CardTitle>Welcome to EducAIt</CardTitle>
+                <CardDescription>
+                  Welcome to EducAIt, your comprehensive tool for drafting customized AI policies
+                  for educational institutions. Answer a few questions about your needs to generate
+                  a tailored policy outline.
+                </CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <Button 
+                  className="w-full" 
+                  size="lg" 
+                  onClick={startProcess}
+                >
+                  Start Creating Your Policy
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+
+          {/* Questions */}
+          {section !== 'landing' && section !== 'results' && (
+            <Card className="mx-auto max-w-2xl">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBack}
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                  <CardTitle>{getSectionTitle()}</CardTitle>
+                  <div className="w-[70px]" /> {/* Spacer for alignment */}
+                </div>
+                <CardDescription>
+                  {getCurrentQuestion()?.question}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Regular options */}
+                {!isDropdownQuestion(getCurrentQuestion()) && !isSliderQuestion(getCurrentQuestion()) && (
+                  <div className="grid grid-cols-1 gap-4">
+                    {getCurrentQuestion()!.options.map((option, i) => (
+                      <Button
+                        key={i}
+                        variant="outline"
+                        className="justify-start h-auto py-4 text-left"
+                        onClick={() => handleNext(option)}
+                      >
+                        {option}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Dropdown */}
+                {isDropdownQuestion(getCurrentQuestion()) && (
+                  <Select onValueChange={handleNext}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getCurrentQuestion()!.options.map((option, i) => (
+                        <SelectItem key={i} value={option}>{option}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                
+                {/* Slider */}
+                {isSliderQuestion(getCurrentQuestion()) && (() => {
+                  const question = getCurrentQuestion() as SliderQuestion;
+                  return (
+                    <div className="space-y-4">
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Low ({question.min})</span>
+                        <span>High ({question.max})</span>
+                      </div>
+                      <Slider 
+                        defaultValue={[Math.floor((question.max + question.min) / 2)]}
+                        min={question.min}
+                        max={question.max}
+                        step={1}
+                        onValueChange={handleSliderChange}
+                        onValueCommit={(value) => handleNext(value[0] + "/10")}
+                        className="py-4"
+                      />
+                      <div className="text-center text-sm font-medium">
+                        Selected: <span id="sliderValue">{Math.floor((question.max + question.min) / 2)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Results Page */}
+          {section === 'results' && (
+            <Card className="mx-auto max-w-4xl">
+              <CardHeader>
+                <CardTitle>Your AI Policy</CardTitle>
+                <CardDescription>
+                  Based on your responses, we've generated a customized AI policy for your educational institution.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                    <p className="text-muted-foreground">Generating your AI policy...</p>
+                  </div>
+                ) : (
+                  <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert">
+                    <ReactMarkdown>
+                      {response}
+                    </ReactMarkdown>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    // Reset to start
+                    setSection("landing");
+                    setQuestionIndex(0);
+                    setResponse("");
+                  }}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Start Over
+                </Button>
+                <Button 
+                  onClick={() => {
+                    // Download functionality
+                    const element = document.createElement("a");
+                    const file = new Blob([response], {type: 'text/plain'});
+                    element.href = URL.createObjectURL(file);
+                    element.download = "AI_Policy_Document.txt";
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                  }}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Policy
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 } 

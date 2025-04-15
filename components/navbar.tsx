@@ -13,13 +13,13 @@ export default function Navbar() {
         </div>
         
         <nav className="hidden md:flex items-center justify-center space-x-6 text-sm font-medium mx-auto">
-          <Link href="#solutions" className="transition-colors hover:text-primary">
+          <Link href="/#solutions" className="transition-colors hover:text-primary">
             Solutions
           </Link>
-          <Link href="#team" className="transition-colors hover:text-primary">
+          <Link href="/#team" className="transition-colors hover:text-primary">
             Meet the Team
           </Link>
-          <Link href="#about-us" className="transition-colors hover:text-primary">
+          <Link href="/#about-us" className="transition-colors hover:text-primary">
             About Us
           </Link>
         </nav>
