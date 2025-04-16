@@ -7,18 +7,18 @@ export async function POST(request: NextRequest) {
     apiKey: process.env.OPENAI_API_KEY
   });
   
-  const { systemPrompt, prompt } = await request.json();
+  const { model, systemPrompt, prompt } = await request.json();
   
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4.1-nano",
+      model: model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: prompt }
       ],
-      temperature: 0.7,
-      max_tokens: 15000,
-      top_p: 1,
+      temperature: 1,
+      max_tokens: 20000,
+      top_p: 0.4,
       frequency_penalty: 0,
       presence_penalty: 0,
     });

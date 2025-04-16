@@ -232,13 +232,50 @@ export default function PolicyGenerator() {
         })()
       };
   
+      // Function to make API calls for each section
+      const generateSection = async (sectionName: string, sectionPrompt: string) => {
+        const systemPrompt = `
+          You are an expert in creating AI policies for educational institutions. Your task is to generate the "${sectionName}" section of an AI policy based on the parameters and contextual insights provided.
+          
+          Focus ONLY on the "${sectionName}" section. Do not include any other sections.
+          Be specific, clear, and actionable in your guidelines.
+          Use professional language appropriate for an educational policy document.
+          Do not include any introductory or concluding remarks outside of the section content.
+          
+          Use the specific data points provided in the prompt to tailor the content to the institution's needs.
+          If the institution is a district, school, or classroom, adjust the scope and language accordingly.
+          If the age group is K-5, 6-8, or 9-12, use age-appropriate language and considerations.
+          If the state is specified, include relevant state-specific regulations or guidelines.
+          If diversity or English proficiency levels are mentioned, address those specific needs.
+          If academic integrity or AI incorporation levels are specified, tailor the guidelines accordingly.
+          If environmental consciousness or commitment levels are provided, adjust the environmental impact section accordingly.
+        `;
 
-      const systemPrompt = `
-        You are a tool that helps educators outline and format policy towards AI based on the following comprehensive analysis. Make sure to utilize all the information provided to you.
-      `;
+        const response = await fetch('/api/openai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            model: "gpt-4.1-nano",
+            systemPrompt, 
+            prompt: sectionPrompt 
+          }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.content) {
+          return data.content;
+        } else if (data.error) {
+          return `Error in ${sectionName} section: ${data.error}`;
+        } else {
+          return `No valid response received for ${sectionName} section.`;
+        }
+      };
 
-      // Combine all contexts into a comprehensive prompt
-      const prompt = `
+      // Generate each section
+      const introductionPrompt = `
         POLICY PARAMETERS:
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
@@ -249,54 +286,291 @@ export default function PolicyGenerator() {
         - AI Incorporation Level: ${aiIncorporation}
         - Environmental Consciousness: ${environmentalConsciousness}
         - Environmental Commitment: ${environmentalCommitment}
-  
+        
         CONTEXTUAL INSIGHTS:
-  
-        1. PRIVACY CONSIDERATIONS:
         ${policyContext.privacyContext}
-  
-        2. BIAS AND INCLUSIVITY:
         ${policyContext.biasContext}
-  
-        3. LEARNING AND ACADEMIC INTEGRITY:
         ${policyContext.learningContext}
-  
-        4. ENVIRONMENTAL RESPONSIBILITY:
         ${policyContext.environmentContext}
-  
-        POLICY GENERATION INSTRUCTIONS:
-        Please generate a comprehensive, nuanced AI policy document that:
-        - Addresses the specific needs of the identified educational context
-        - Provides clear, actionable guidelines
-        - Considers the unique combination of parameters provided
-        - Offers both strategic overview and detailed implementation suggestions
-        - Ensures ethical, inclusive, and responsible AI usage
-  
-        Format the policy with clear sections including:
-        - Introduction and Rationale
-        - Scope and Applicability
-        - Detailed Guidelines
-        - Implementation Strategies
-        - Monitoring and Compliance
-        - Future Adaptability
+        
+        Generate the Introduction and Rationale section of the AI policy. This section should:
+        - Explain the purpose of the policy
+        - Provide context for why AI integration is important
+        - Outline the benefits of AI in education
+        - Set the tone for the rest of the policy
+        - Reference the specific context of this ${policyScope} (${ageGroup} students in ${state})
+        - Address the specific needs related to diversity (${diversity}) and English proficiency (${englishProficiency})
+        - Mention the level of AI incorporation (${aiIncorporation}) and academic integrity concerns (${academicIntegrity})
+        - Include environmental considerations based on consciousness (${environmentalConsciousness}) and commitment (${environmentalCommitment})
       `;
       
-      const response = await fetch('/api/openai', {
+      const permittedUsePrompt = `
+        POLICY PARAMETERS:
+        - Policy Scope: ${policyScope}
+        - Age Group: ${ageGroup}
+        - State: ${state}
+        - AI Incorporation Level: ${aiIncorporation}
+        - Academic Integrity: ${academicIntegrity}
+        
+        CONTEXTUAL INSIGHTS:
+        ${policyContext.learningContext}
+        
+        Generate the Permitted Use section of the AI policy. This section should:
+        - Clearly outline what uses of AI are permitted and encouraged
+        - Provide specific examples of acceptable AI usage
+        - Explain how AI can supplement student learning
+        - Include guidelines for teachers on how to incorporate AI
+        - Tailor the permitted uses to the specific age group (${ageGroup})
+        - Consider the level of AI incorporation desired (${aiIncorporation})
+        - Address academic integrity concerns (${academicIntegrity})
+        - Include state-specific considerations for ${state}
+      `;
+      
+      const prohibitedUsePrompt = `
+        POLICY PARAMETERS:
+        - Policy Scope: ${policyScope}
+        - Age Group: ${ageGroup}
+        - State: ${state}
+        - Academic Integrity: ${academicIntegrity}
+        - AI Incorporation Level: ${aiIncorporation}
+        
+        CONTEXTUAL INSIGHTS:
+        ${policyContext.learningContext}
+        
+        Generate the Prohibited Use section of the AI policy. This section should:
+        - Clearly outline what uses of AI are prohibited
+        - Address academic integrity concerns
+        - Provide specific examples of unacceptable AI usage
+        - Explain the consequences of policy violations
+        - Tailor the prohibited uses to the specific age group (${ageGroup})
+        - Consider the level of AI incorporation (${aiIncorporation})
+        - Address the specific academic integrity concerns (${academicIntegrity})
+        - Include state-specific considerations for ${state}
+      `;
+      
+      const staffTrainingPrompt = `
+        POLICY PARAMETERS:
+        - Policy Scope: ${policyScope}
+        - Age Group: ${ageGroup}
+        - State: ${state}
+        - AI Incorporation Level: ${aiIncorporation}
+        - Academic Integrity: ${academicIntegrity}
+        
+        Generate the Commitment to Staff Training section of the AI policy. This section should:
+        - Outline the school's commitment to training staff on AI usage
+        - Describe the types of training that will be provided
+        - Explain how staff will be supported in implementing AI tools
+        - Include guidelines for ongoing professional development
+        - Tailor the training approach to the specific age group (${ageGroup})
+        - Consider the level of AI incorporation (${aiIncorporation})
+        - Address the specific academic integrity concerns (${academicIntegrity})
+        - Include state-specific considerations for ${state}
+      `;
+      
+      const privacyPrompt = `
+        POLICY PARAMETERS:
+        - Policy Scope: ${policyScope}
+        - Age Group: ${ageGroup}
+        - State: ${state}
+        - Student Body Diversity: ${diversity}
+        - English Proficiency: ${englishProficiency}
+        
+        CONTEXTUAL INSIGHTS:
+        ${policyContext.privacyContext}
+        
+        Generate the Privacy & Transparency section of the AI policy. This section should:
+        - Address data privacy concerns
+        - Outline disclosure rules
+        - Explain how student data will be protected
+        - Include guidelines for transparency in AI usage
+        - Tailor privacy considerations to the specific age group (${ageGroup})
+        - Consider the diversity of the student body (${diversity})
+        - Address language considerations based on English proficiency (${englishProficiency})
+        - Include state-specific privacy regulations for ${state}
+      `;
+      
+      const biasPrompt = `
+        POLICY PARAMETERS:
+        - Policy Scope: ${policyScope}
+        - Age Group: ${ageGroup}
+        - State: ${state}
+        - Student Body Diversity: ${diversity}
+        - English Proficiency: ${englishProficiency}
+        
+        CONTEXTUAL INSIGHTS:
+        ${policyContext.biasContext}
+        
+        Generate the Bias & Accessibility section of the AI policy. This section should:
+        - Address potential bias in AI tools
+        - Outline strategies for ensuring equitable access
+        - Explain how the policy promotes inclusivity
+        - Include guidelines for selecting unbiased AI tools
+        - Tailor bias considerations to the specific age group (${ageGroup})
+        - Address the specific diversity needs (${diversity})
+        - Include language considerations based on English proficiency (${englishProficiency})
+        - Include state-specific considerations for ${state}
+      `;
+      
+      const environmentalPrompt = `
+        POLICY PARAMETERS:
+        - Policy Scope: ${policyScope}
+        - Age Group: ${ageGroup}
+        - State: ${state}
+        - Environmental Consciousness: ${environmentalConsciousness}
+        - Environmental Commitment: ${environmentalCommitment}
+        
+        CONTEXTUAL INSIGHTS:
+        ${policyContext.environmentContext}
+        
+        Generate the Environmental Impact section of the AI policy. This section should:
+        - Address the environmental impact of AI technologies
+        - Outline strategies for minimizing carbon footprint
+        - Explain how the school will promote sustainable AI usage
+        - Include specific environmental goals and commitments
+        - Tailor environmental considerations to the specific age group (${ageGroup})
+        - Address the level of environmental consciousness (${environmentalConsciousness})
+        - Include specific commitments based on environmental commitment level (${environmentalCommitment})
+        - Include state-specific environmental considerations for ${state}
+      `;
+      
+      const accountabilityPrompt = `
+        POLICY PARAMETERS:
+        - Policy Scope: ${policyScope}
+        - Age Group: ${ageGroup}
+        - State: ${state}
+        - Academic Integrity: ${academicIntegrity}
+        - AI Incorporation Level: ${aiIncorporation}
+        
+        Generate the Accountability & Enforcement section of the AI policy. This section should:
+        - Outline how the policy will be enforced
+        - Describe the roles and responsibilities of different stakeholders
+        - Explain the consequences of policy violations
+        - Include guidelines for monitoring and evaluation
+        - Tailor accountability measures to the specific age group (${ageGroup})
+        - Address the specific academic integrity concerns (${academicIntegrity})
+        - Consider the level of AI incorporation (${aiIncorporation})
+        - Include state-specific considerations for ${state}
+      `;
+      
+      const conclusionPrompt = `
+        POLICY PARAMETERS:
+        - Policy Scope: ${policyScope}
+        - Age Group: ${ageGroup}
+        - State: ${state}
+        - Student Body Diversity: ${diversity}
+        - English Proficiency: ${englishProficiency}
+        - Academic Integrity: ${academicIntegrity}
+        - AI Incorporation Level: ${aiIncorporation}
+        - Environmental Consciousness: ${environmentalConsciousness}
+        - Environmental Commitment: ${environmentalCommitment}
+        
+        CONTEXTUAL INSIGHTS:
+        ${policyContext.privacyContext}
+        ${policyContext.biasContext}
+        ${policyContext.learningContext}
+        ${policyContext.environmentContext}
+        
+        Generate the Conclusion section of the AI policy. This section should:
+        - Summarize the key points of the policy
+        - Reinforce the school's commitment to responsible AI usage
+        - Outline the next steps for implementation
+        - Include a statement about the policy's evolution over time
+        - Reference the specific context of this ${policyScope} (${ageGroup} students in ${state})
+        - Address the specific needs related to diversity (${diversity}) and English proficiency (${englishProficiency})
+        - Mention the level of AI incorporation (${aiIncorporation}) and academic integrity concerns (${academicIntegrity})
+        - Include environmental considerations based on consciousness (${environmentalConsciousness}) and commitment (${environmentalCommitment})
+      `;
+
+      // Generate all sections in parallel
+      const [
+        introduction,
+        permittedUse,
+        prohibitedUse,
+        staffTraining,
+        privacy,
+        bias,
+        environmental,
+        accountability,
+        conclusion
+      ] = await Promise.all([
+        generateSection("Introduction and Rationale", introductionPrompt),
+        generateSection("Permitted Use", permittedUsePrompt),
+        generateSection("Prohibited Use", prohibitedUsePrompt),
+        generateSection("Commitment to Staff Training", staffTrainingPrompt),
+        generateSection("Privacy & Transparency", privacyPrompt),
+        generateSection("Bias & Accessibility", biasPrompt),
+        generateSection("Environmental Impact", environmentalPrompt),
+        generateSection("Accountability & Enforcement", accountabilityPrompt),
+        generateSection("Conclusion", conclusionPrompt)
+      ]);
+
+      // Combine all sections
+      const combinedPolicy = `
+# AI Policy for ${policyScope === "A district" ? "School District" : policyScope === "A school" ? "School" : "Classroom"}
+
+${introduction}
+
+## Permitted Use
+${permittedUse}
+
+## Prohibited Use
+${prohibitedUse}
+
+## Commitment to Staff Training
+${staffTraining}
+
+## Privacy & Transparency
+${privacy}
+
+## Bias & Accessibility
+${bias}
+
+## Environmental Impact
+${environmental}
+
+## Accountability & Enforcement
+${accountability}
+
+## Conclusion
+${conclusion}
+      `;
+
+      // Final proofing and formatting
+      const proofingSystemPrompt = `
+        You are an expert editor specializing in educational policy documents. Your task is to proofread, format, and refine the provided AI policy document.
+        
+        Please:
+        1. Ensure consistent formatting throughout the document
+        2. Remove any text that appears to be from the AI model itself (like "Here's the section on..." or "I've generated...")
+        3. Fix any grammatical or spelling errors
+        4. Ensure the document flows logically from section to section
+        5. Make sure all sections are properly formatted with appropriate headings
+        6. Remove any redundant information
+        7. Ensure the policy is clear, professional, and actionable
+        
+        Return ONLY the final, polished policy document without any additional commentary or explanations.
+      `;
+
+      const proofingResponse = await fetch('/api/openai', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ systemPrompt, prompt }),
+        body: JSON.stringify({ 
+          model: "gpt-4.1",
+          systemPrompt: proofingSystemPrompt, 
+          prompt: combinedPolicy 
+        }),
       });
       
-      const data = await response.json();
+      const proofingData = await proofingResponse.json();
       
-      if (data.content) {
-        setResponse(data.content);
-      } else if (data.error) {
-        setResponse(`Error: ${data.error}`);
+      if (proofingData.content) {
+        setResponse(proofingData.content);
+      } else if (proofingData.error) {
+        setResponse(`Error during final proofing: ${proofingData.error}`);
       } else {
-        setResponse("No valid response received from the API.");
+        setResponse("No valid response received during final proofing.");
       }
     } catch (error) {
       console.error("Error generating policy:", error);
