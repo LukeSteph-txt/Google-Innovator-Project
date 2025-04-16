@@ -29,7 +29,7 @@ export default function Features() {
       <div className="mx-auto max-w-[58rem] text-center">
         <h2 className="font-bold text-3xl leading-[1.1] sm:text-3xl md:text-5xl">Educational AI Solutions</h2>
         <p className="mt-4 text-muted-foreground sm:text-lg">
-          Discover how EducAIt can transform your educational institution with our innovative AI tools and policies.
+          Discover how AI Policy Pathway can transform your educational institution with our innovative AI tools and policies.
         </p>
       </div>
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">

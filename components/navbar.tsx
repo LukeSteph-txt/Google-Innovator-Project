@@ -8,7 +8,7 @@ export default function Navbar() {
       <div className="relative flex h-14 items-center px-4 md:px-6 lg:px-8">
         <div className="absolute left-4 md:left-6 lg:left-8">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold">EducAIt</span>
+            <span className="font-bold">AI Policy Pathway</span>
           </Link>
         </div>
         

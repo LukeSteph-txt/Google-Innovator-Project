@@ -9,7 +9,7 @@ export default function CTA() {
           Ready to implement AI in your educational institution?
         </h2>
         <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
-          Join leading schools and districts who trust EducAIt to create responsible AI policies and enhance learning experiences.
+          Join leading schools and districts who trust AI Policy Pathway to create responsible AI policies and enhance learning experiences.
         </p>
         <Button size="lg" className="mt-4" asChild>
           <Link href="/policy-generator">

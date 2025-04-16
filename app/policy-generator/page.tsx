@@ -432,7 +432,7 @@ export default function PolicyGenerator() {
   // Get section title
   const getSectionTitle = () => {
     const titles: Record<SectionType, string> = {
-      landing: "Welcome to EducAIt",
+      landing: "Welcome to AI Policy Pathway",
       privacy: "Privacy Considerations",
       bias: "Bias Assessment",
       learning: "Student Learning",
@@ -519,9 +519,9 @@ export default function PolicyGenerator() {
           {section === 'landing' && (
             <Card className="mx-auto max-w-2xl">
               <CardHeader>
-                <CardTitle>Welcome to EducAIt</CardTitle>
+                <CardTitle>Welcome to AI Policy Pathway</CardTitle>
                 <CardDescription>
-                  Welcome to EducAIt, your comprehensive tool for drafting customized AI policies
+                  Welcome to AI Policy Pathway, your comprehensive tool for drafting customized AI policies
                   for educational institutions. Answer a few questions about your needs to generate
                   a tailored policy outline.
                 </CardDescription>
