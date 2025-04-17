@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,8 +8,9 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import ReactMarkdown from 'react-markdown';
-import { Download, RefreshCw, ArrowLeft } from "lucide-react";
+import { Download, RefreshCw, ArrowLeft, Edit, Save } from "lucide-react";
 import Navbar from "@/components/navbar";
+import { Textarea } from "@/components/ui/textarea";
 
 // List of US states for dropdown
 const usStates = [
@@ -70,10 +71,14 @@ export default function PolicyGenerator() {
   // State for API response
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedPolicy, setEditedPolicy] = useState("");
   
   // State for current section and question
   const [section, setSection] = useState<SectionType>('landing');
   const [questionIndex, setQuestionIndex] = useState(0);
+
+  const policyRef = useRef<HTMLDivElement>(null);
 
   async function generatePolicy() {
     setLoading(true);
@@ -233,7 +238,7 @@ export default function PolicyGenerator() {
       };
   
       // Function to make API calls for each section
-      const generateSection = async (sectionName: string, sectionPrompt: string) => {
+      const generateSection = async (sectionName: string, sectionPrompt: string, exampleContent?: string) => {
         const systemPrompt = `
           You are an expert in creating AI policies for educational institutions. Your task is to generate the "${sectionName}" section of an AI policy based on the parameters and contextual insights provided.
           
@@ -249,6 +254,8 @@ export default function PolicyGenerator() {
           If diversity or English proficiency levels are mentioned, address those specific needs.
           If academic integrity or AI incorporation levels are specified, tailor the guidelines accordingly.
           If environmental consciousness or commitment levels are provided, adjust the environmental impact section accordingly.
+          
+          ${exampleContent ? `Use the following example as a optimal reference and template for style and structure, but adapt the content to the specific parameters provided above:\n\n${exampleContent}` : ''}
         `;
 
         const response = await fetch('/api/openai', {
@@ -481,6 +488,96 @@ export default function PolicyGenerator() {
         - Include environmental considerations based on consciousness (${environmentalConsciousness}) and commitment (${environmentalCommitment})
       `;
 
+      // Example content for each section
+      const introductionExample = `
+Artificial Intelligence (AI), particularly Generative AI (Gen AI), is playing an increasing role in education, from conversational chatbots and virtual tutors to automated grading software and classroom monitoring tools. Therefore, [SCHOOL NAME] recognizes the need for transparent governance of these technologies to harness their benefits while safeguarding our students and staff. With proper guidance, AI has the potential to improve learning outcomes, support teachers, and promote fairness in education; however, without clear policies, there is a risk of privacy violations, biased outcomes, and other unintended harms when these tools are used in schools. 
+
+This policy establishes a framework for the ethical and effective use of AI in our high school that serves students over 13 years of age and defines the scope of AI tools it covers. It applies to all AI-powered systems used within the school's educational and administrative processes – including generative AI chatbots, automated grading and assessment platforms, adaptive learning or tutoring systems, and AI-based monitoring or proctoring technologies. 
+
+By outlining expectations and limitations for these tools, [SCHOOL NAME] commits to using AI in a manner that upholds our educational mission and values, complies with all applicable laws, and protects the rights and interests of students, parents, and staff. 
+
+The scope of this policy encompasses students, teachers, and administrators. It also sets the expectations for any third-party vendors or tools involved in the use of AI within our school setting. 
+
+Our overarching goal is to ensure that AI is employed as a positive supplement to education – never as a replacement for human judgment or accountability – and that its use is transparent, fair, and aligned with best practices in K-12 education governance.
+      `;
+
+      const permittedUseExample = `
+The following lists several permissible and encouraged uses of AI when they serve as supplements to a student's effort and thinking. Students are allowed to use AI for specific learning activities under the direction and supervision of their classroom teachers. The classroom teacher must explicitly permit the following use. Without such permission, it is assumed that all activities are not permissible. Teachers may recommend or incorporate AI-powered tools to differentiate instruction or provide additional support outside of class. 
+
+The following includes typical student activities that are permitted by a staff member:
+
+* Practicing skills with an AI tutor or drill program
+* Use of AI-driven tutoring systems 
+* Generative AI tools can help brainstorm ideas or summarize complex information to support student understanding
+* Using AI to translate passages or define words for language learning
+* Employing speech-to-text or text-to-speech tools for accessibility based on the student's Individual Education Plan, 504 Plan, or under the direction of the classroom teacher
+* Generating sample problems or quizzes to test themselves
+* Getting feedback on drafts (like grammar suggestions or hints to improve an essay)
+* Other formative or assistive tasks.
+      `;
+
+      const prohibitedUseExample = `
+At the same time, [SCHOOL NAME] maintains strict rules against the misuse of AI in any manner that undermines learning.
+
+First and foremost, students and staff are forbidden from using AI tools to impersonate others or engage in unethical behavior such as creating deep fakes, bullying, or harassment. Using AI to generate false images, videos, or messages of a classmate, teacher, or any individual is strictly prohibited and subject to serious disciplinary action under our bullying and harassment policies. Likewise, attempting to use AI to hack school systems, to bypass security or content filters, or to access inappropriate content is banned.
+
+Additional Prohibited uses of AI by students (or staff, where applicable) include, but are not limited to:
+
+* Using AI to plagiarize or produce work that the student then presents as their own original effort
+* Submitting essays, projects, or assignments written in full or in major part by generative AI without proper attribution or authorization
+* Relying on AI to complete assessments or homework in place of the student's own understanding (for example, copying answers from ChatGPT or an AI solver is cheating and will be treated as such)
+* Using AI tools to fabricate data or citations
+* Any use of AI to deceive, mislead, or violate academic integrity. All student work must be the student's own, except where use of AI is explicitly permitted and properly documented.
+
+If a teacher allows AI assistance for a particular assignment (for instance, permitting grammar checks or idea brainstorming), the student must still cite or acknowledge the AI's contribution in accordance with the teacher's instructions. Failure to disclose AI-generated content in work that is submitted for credit will be considered a form of plagiarism.
+      `;
+
+      const staffTrainingExample = `
+[SCHOOL NAME] will provide staff training to emphasize the importance of secure AI use. In line with best practices, [SCHOOL NAME] will ensure a comprehensive approach to compliance and ethics. By strictly following legal requirements and conducting due diligence on all AI tools, we aim to protect our students and the institution from legal risks and to set a high standard for responsible AI adoption in education.
+
+Staff will receive training on:
+
+* How to implement AI tools ethically and securely in their classrooms
+* Detecting and addressing misuse by students
+* How to cite AI tools when used in academic work
+* Understanding AI limitations and avoiding over-reliance on automated systems
+
+Teachers will be equipped to assess AI outputs critically, ensuring AI enhances the learning experience rather than replacing human judgment.
+      `;
+
+      const privacyExample = `
+[SCHOOL NAME] will ensure full compliance with relevant federal, state, and local laws on student data protection, digital safety, and nondiscrimination pertaining to AI tools. Compliance with all appropriate federal, state, and local laws is essential. All AI usage under this policy must conform to the legal standards and regulations governing data, technology, and student rights. 
+
+We will adhere to the Family Educational Rights and Privacy Act (FERPA), the Health Insurance Portability and Accountability Act (HIPAA), and the Children's Online Privacy Protection Act (COPPA). Additionally, we will comply with the General Data Protection Regulation (GDPR) principles, including data minimization, purpose limitation, and user rights.
+
+In practice, this means our contracts with AI service providers will include provisions that mirror strong privacy protections – for example, limiting the use of our data to only the services provided to the school, ensuring data can be deleted upon request, and reporting any data breaches to the appropriate authority and the school community immediately.
+      `;
+
+      const biasExample = `
+We are committed to using AI to level the playing field and ensuring that no student group is discriminated against. [SCHOOL NAME] requires vendors of AI educational software to provide evidence of efforts to detect and mitigate bias in their products. We will independently evaluate tools to assess whether they have a disparate impact on different groups of students. 
+
+AI-driven decision-making will not be used to prejudice a student's opportunities or treatment based on protected characteristics such as race, ethnicity, gender, or disability. High-stakes decisions like grading, disciplinary actions, and scheduling will always involve human oversight to prevent algorithmic biases from affecting students' futures.
+      `;
+
+      const environmentalExample = `
+[SCHOOL NAME] acknowledges that while AI can offer significant educational advantages, it also carries an environmental footprint through the energy and computing resources it consumes. The training and operation of AI models, especially large-scale generative AI, require substantial electricity and cooling, which in turn contribute to carbon emissions. As part of our commitment to responsible technology use, we pledge to minimize the environmental impact of AI in our school's operations. 
+
+We will prioritize AI tools optimized for energy efficiency and encourage practices such as using AI only when necessary and leveraging renewable energy where possible. The environmental impact of AI will also be integrated into our curriculum to teach students about the intersection of technology and sustainability.
+      `;
+
+      const accountabilityExample = `
+An AI Ethics & Compliance Committee will be established to oversee AI use in the school. This committee will be composed of diverse stakeholders such as administrators, teachers, counselors, and data/privacy experts. Its duties will include conducting periodic audits of AI applications, reviewing new AI tool proposals, and addressing any ethical concerns. The committee will also maintain an AI use registry for transparency.
+
+The committee will ensure that all AI tools are in compliance with this policy, and will act promptly to suspend or remove any tool that violates the policy. Additionally, regular reports on AI usage will be provided to the school board to ensure ongoing oversight.
+      `;
+
+      const conclusionExample = `
+This policy is a living document that may be updated to reflect changes in technology and regulations. [SCHOOL NAME] reserves the right to modify this policy as necessary to ensure the ethical and responsible use of AI in education. We are committed to empowering educators and students through AI while safeguarding privacy, fairness, and academic integrity. 
+
+Our ultimate goal is to enhance learning experiences and promote positive outcomes for all students through the responsible use of AI, while ensuring that these technologies are aligned with the highest standards of ethical and legal compliance.
+      `;
+
+
       // Generate all sections in parallel
       const [
         introduction,
@@ -493,21 +590,22 @@ export default function PolicyGenerator() {
         accountability,
         conclusion
       ] = await Promise.all([
-        generateSection("Introduction and Rationale", introductionPrompt),
-        generateSection("Permitted Use", permittedUsePrompt),
-        generateSection("Prohibited Use", prohibitedUsePrompt),
-        generateSection("Commitment to Staff Training", staffTrainingPrompt),
-        generateSection("Privacy & Transparency", privacyPrompt),
-        generateSection("Bias & Accessibility", biasPrompt),
-        generateSection("Environmental Impact", environmentalPrompt),
-        generateSection("Accountability & Enforcement", accountabilityPrompt),
-        generateSection("Conclusion", conclusionPrompt)
+        generateSection("Introduction and Rationale", introductionPrompt, introductionExample),
+        generateSection("Permitted Use", permittedUsePrompt, permittedUseExample),
+        generateSection("Prohibited Use", prohibitedUsePrompt, prohibitedUseExample),
+        generateSection("Commitment to Staff Training", staffTrainingPrompt, staffTrainingExample),
+        generateSection("Privacy & Transparency", privacyPrompt, privacyExample),
+        generateSection("Bias & Accessibility", biasPrompt, biasExample),
+        generateSection("Environmental Impact", environmentalPrompt, environmentalExample),
+        generateSection("Accountability & Enforcement", accountabilityPrompt, accountabilityExample),
+        generateSection("Conclusion", conclusionPrompt, conclusionExample)
       ]);
 
       // Combine all sections
       const combinedPolicy = `
 # AI Policy for ${policyScope === "A district" ? "School District" : policyScope === "A school" ? "School" : "Classroom"}
 
+## Introduction and Rationale
 ${introduction}
 
 ## Permitted Use
@@ -548,6 +646,18 @@ ${conclusion}
         6. Remove any redundant information
         7. Ensure the policy is clear, professional, and actionable
         
+        FORMATTING REQUIREMENTS:
+        - Use Markdown formatting for proper document structure
+        - The main title should be formatted as "# TITLE" (centered, large, bold)
+        - Section headings should be formatted as "## SECTION NAME" (bold, medium size)
+        - Subsections should be formatted as "### SUBSECTION NAME" (bold, smaller size)
+        - Add a blank line before and after each paragraph for proper spacing
+        - Use bullet points for lists with proper indentation
+        - Use bold text for emphasis where appropriate
+        - Ensure consistent spacing between sections (at least one blank line)
+        - Format any important terms or definitions in italics
+        - Use proper paragraph breaks to improve readability
+        
         Return ONLY the final, polished policy document without any additional commentary or explanations.
       `;
 
@@ -567,14 +677,18 @@ ${conclusion}
       
       if (proofingData.content) {
         setResponse(proofingData.content);
+        setEditedPolicy(proofingData.content);
       } else if (proofingData.error) {
         setResponse(`Error during final proofing: ${proofingData.error}`);
+        setEditedPolicy(`Error during final proofing: ${proofingData.error}`);
       } else {
         setResponse("No valid response received during final proofing.");
+        setEditedPolicy("No valid response received during final proofing.");
       }
     } catch (error) {
       console.error("Error generating policy:", error);
       setResponse("An error occurred while generating the policy. Please try again.");
+      setEditedPolicy("An error occurred while generating the policy. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -742,6 +856,20 @@ ${conclusion}
     }
   };
 
+  // Function to handle policy editing
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Save changes
+      setResponse(editedPolicy);
+    }
+    setIsEditing(!isEditing);
+  };
+
+  // Function to handle policy text changes
+  const handlePolicyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditedPolicy(e.target.value);
+  };
+
   return (
     <div className="relative min-h-screen">
       {/* Background gradients */}
@@ -899,6 +1027,7 @@ ${conclusion}
                 <CardTitle>Your AI Policy</CardTitle>
                 <CardDescription>
                   Based on your responses, we've generated a customized AI policy for your educational institution.
+                  {!isEditing ? " You can edit the policy before downloading." : " Edit the policy below."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -908,10 +1037,34 @@ ${conclusion}
                     <p className="text-muted-foreground">Generating your AI policy...</p>
                   </div>
                 ) : (
-                  <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert">
-                    <ReactMarkdown>
-                      {response}
-                    </ReactMarkdown>
+                  <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert" ref={policyRef}>
+                    <div className="pdf-container">
+                      {isEditing ? (
+                        <Textarea
+                          value={editedPolicy}
+                          onChange={handlePolicyChange}
+                          className="min-h-[500px] font-mono text-sm"
+                          placeholder="Edit your policy here..."
+                        />
+                      ) : (
+                        <ReactMarkdown
+                          components={{
+                            h1: ({node, ...props}) => <h1 className="text-3xl font-bold mb-6" {...props} />,
+                            h2: ({node, ...props}) => <h2 className="text-2xl font-bold mt-8 mb-4" {...props} />,
+                            h3: ({node, ...props}) => <h3 className="text-xl font-bold mt-6 mb-3" {...props} />,
+                            p: ({node, ...props}) => <p className="my-4 leading-relaxed" {...props} />,
+                            ul: ({node, ...props}) => <ul className="list-disc pl-6 my-4 space-y-2" {...props} />,
+                            ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-4 space-y-2" {...props} />,
+                            li: ({node, ...props}) => <li className="my-1" {...props} />,
+                            strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
+                            em: ({node, ...props}) => <em className="italic" {...props} />,
+                            hr: () => null // Remove any horizontal rules
+                          }}
+                        >
+                          {response}
+                        </ReactMarkdown>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -923,26 +1076,232 @@ ${conclusion}
                     setSection("landing");
                     setQuestionIndex(0);
                     setResponse("");
+                    setEditedPolicy("");
+                    setIsEditing(false);
                   }}
                 >
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Start Over
                 </Button>
-                <Button 
-                  onClick={() => {
-                    // Download functionality
-                    const element = document.createElement("a");
-                    const file = new Blob([response], {type: 'text/plain'});
-                    element.href = URL.createObjectURL(file);
-                    element.download = "AI_Policy_Document.txt";
-                    document.body.appendChild(element);
-                    element.click();
-                    document.body.removeChild(element);
-                  }}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Policy
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={handleEditToggle}
+                  >
+                    {isEditing ? (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Changes
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Policy
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    onClick={async () => {
+                      // Download as PDF
+                      if (policyRef.current) {
+                        try {
+                          // Dynamically import the libraries
+                          const { jsPDF } = await import('jspdf');
+                          
+                          // Create a new PDF document
+                          const pdf = new jsPDF({
+                            orientation: 'portrait',
+                            unit: 'in',
+                            format: 'letter'
+                          });
+                          
+                          // Set margins - increase bottom margin to ensure text doesn't hit the bottom
+                          const margin = 1; // Increased from 0.5 to 0.75 inches
+                          const pageWidth = pdf.internal.pageSize.getWidth();
+                          const pageHeight = pdf.internal.pageSize.getHeight();
+                          const contentWidth = pageWidth - (2 * margin);
+                          const contentHeight = pageHeight - (2 * margin); // Define content height with margins
+                          
+                          // Set font
+                          pdf.setFont('helvetica');
+                          
+                          // Process the Markdown content to extract text and structure
+                          const processMarkdown = (markdown: string) => {
+                            // Split by lines
+                            const lines = markdown.split('\n');
+                            let currentY = margin;
+                            let currentFontSize = 12;
+                            let currentFontStyle = 'normal';
+                            
+                            // Process each line
+                            for (let i = 0; i < lines.length; i++) {
+                              const line = lines[i].trim();
+                              
+                              // Skip empty lines
+                              if (!line) {
+                                currentY += 0.2; // Add some spacing
+                                continue;
+                              }
+                              
+                              // Check for headings
+                              if (line.startsWith('# ')) {
+                                // Main title
+                                pdf.setFontSize(18);
+                                pdf.setFont('helvetica', 'bold');
+                                const title = line.substring(2).trim();
+                                pdf.text(title, pageWidth / 2, currentY, { align: 'center' });
+                                currentY += 0.4;
+                                currentFontSize = 12;
+                                currentFontStyle = 'normal';
+                              } else if (line.startsWith('## ')) {
+                                // Section heading
+                                pdf.setFontSize(14);
+                                pdf.setFont('helvetica', 'bold');
+                                const heading = line.substring(3).trim();
+                                pdf.text(heading, margin, currentY);
+                                currentY += 0.3;
+                                currentFontSize = 12;
+                                currentFontStyle = 'normal';
+                              } else if (line.startsWith('### ')) {
+                                // Subsection heading
+                                pdf.setFontSize(12);
+                                pdf.setFont('helvetica', 'bold');
+                                const subheading = line.substring(4).trim();
+                                pdf.text(subheading, margin, currentY);
+                                currentY += 0.25;
+                                currentFontSize = 12;
+                                currentFontStyle = 'normal';
+                              } else if (line.startsWith('* ') || line.startsWith('- ')) {
+                                // Bullet points
+                                pdf.setFontSize(currentFontSize);
+                                pdf.setFont('helvetica', currentFontStyle);
+                                const bulletText = line.substring(2).trim();
+                                
+                                // Draw bullet point
+                                pdf.text('•', margin + 0.1, currentY);
+                                
+                                // Handle text wrapping for bullet points
+                                const bulletIndent = 0.3; // Indent for bullet point text
+                                const bulletContentWidth = contentWidth - bulletIndent;
+                                
+                                // Split text into words to handle wrapping
+                                const words = bulletText.split(' ');
+                                let lineText = '';
+                                let firstLine = true;
+                                
+                                for (let j = 0; j < words.length; j++) {
+                                  const testLine = lineText + words[j] + ' ';
+                                  const textWidth = pdf.getStringUnitWidth(testLine) * currentFontSize / 72;
+                                  
+                                  if (textWidth > bulletContentWidth && j > 0) {
+                                    // Draw the current line
+                                    pdf.text(lineText, margin + bulletIndent, currentY);
+                                    currentY += 0.2;
+                                    lineText = words[j] + ' ';
+                                    firstLine = false;
+                                  } else {
+                                    lineText = testLine;
+                                  }
+                                }
+                                
+                                // Draw the last line
+                                pdf.text(lineText, margin + bulletIndent, currentY);
+                                currentY += 0.25;
+                              } else if (line.startsWith('1. ') || line.startsWith('2. ') || line.startsWith('3. ') || 
+                                        line.startsWith('4. ') || line.startsWith('5. ') || line.startsWith('6. ') || 
+                                        line.startsWith('7. ') || line.startsWith('8. ') || line.startsWith('9. ')) {
+                                // Numbered lists
+                                pdf.setFontSize(currentFontSize);
+                                pdf.setFont('helvetica', currentFontStyle);
+                                const number = line.substring(0, 2);
+                                const listText = line.substring(3).trim();
+                                
+                                // Draw number
+                                pdf.text(number, margin + 0.1, currentY);
+                                
+                                // Handle text wrapping for numbered lists
+                                const listIndent = 0.3; // Indent for list text
+                                const listContentWidth = contentWidth - listIndent;
+                                
+                                // Split text into words to handle wrapping
+                                const words = listText.split(' ');
+                                let lineText = '';
+                                let firstLine = true;
+                                
+                                for (let j = 0; j < words.length; j++) {
+                                  const testLine = lineText + words[j] + ' ';
+                                  const textWidth = pdf.getStringUnitWidth(testLine) * currentFontSize / 72;
+                                  
+                                  if (textWidth > listContentWidth && j > 0) {
+                                    // Draw the current line
+                                    pdf.text(lineText, margin + listIndent, currentY);
+                                    currentY += 0.2;
+                                    lineText = words[j] + ' ';
+                                    firstLine = false;
+                                  } else {
+                                    lineText = testLine;
+                                  }
+                                }
+                                
+                                // Draw the last line
+                                pdf.text(lineText, margin + listIndent, currentY);
+                                currentY += 0.25;
+                              } else {
+                                // Regular paragraph
+                                pdf.setFontSize(currentFontSize);
+                                pdf.setFont('helvetica', currentFontStyle);
+                                
+                                // Check if we need to start a new page
+                                if (currentY > pageHeight - margin) {
+                                  pdf.addPage();
+                                  currentY = margin;
+                                }
+                                
+                                // Split text into words to handle wrapping
+                                const words = line.split(' ');
+                                let lineText = '';
+                                
+                                for (let j = 0; j < words.length; j++) {
+                                  const testLine = lineText + words[j] + ' ';
+                                  const textWidth = pdf.getStringUnitWidth(testLine) * currentFontSize / 72;
+                                  
+                                  if (textWidth > contentWidth && j > 0) {
+                                    pdf.text(lineText, margin, currentY);
+                                    currentY += 0.2;
+                                    lineText = words[j] + ' ';
+                                  } else {
+                                    lineText = testLine;
+                                  }
+                                }
+                                
+                                pdf.text(lineText, margin, currentY);
+                                currentY += 0.25;
+                              }
+                              
+                              // Check if we need to start a new page - ensure we have enough space for at least one more line
+                              if (currentY > pageHeight - margin - 0.3) {
+                                pdf.addPage();
+                                currentY = margin;
+                              }
+                            }
+                          };
+                          
+                          // Process the Markdown content - use the edited policy if in edit mode
+                          processMarkdown(isEditing ? editedPolicy : response);
+                          
+                          // Save the PDF
+                          pdf.save('AI_Policy_Document.pdf');
+                        } catch (error) {
+                          console.error("Error generating PDF:", error);
+                          alert("There was an error generating the PDF. Please try again.");
+                        }
+                      }
+                    }}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Policy
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
           )}

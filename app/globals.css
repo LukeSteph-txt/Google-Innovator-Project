@@ -57,3 +57,65 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* PDF Export Styles */
+.pdf-container {
+  padding: 20px;
+  max-width: 100%;
+  margin: 0 auto;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.pdf-container h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #000;
+}
+
+.pdf-container h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: #000;
+  padding-bottom: 0.5rem;
+}
+
+.pdf-container h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #000;
+}
+
+.pdf-container p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.pdf-container ul, .pdf-container ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.pdf-container li {
+  margin-bottom: 0.5rem;
+}
+
+.pdf-container strong {
+  font-weight: 600;
+}
+
+.pdf-container em {
+  font-style: italic;
+}
+
+/* Dark mode adjustments for PDF */
+@media (prefers-color-scheme: dark) {
+  .pdf-container {
+    color: #000;
+  }
+  
+  .pdf-container h1, 
+  .pdf-container h2, 
+  .pdf-container h3 {
+    color: #000;
+  }
+}
