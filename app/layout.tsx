@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PolicyPilot",
-  description: "Create your next policy with ease!",
+  title: "AI Policy Pathway",
+  description: "Create your AI policy with ease!",
 };
 
 export default function RootLayout({
