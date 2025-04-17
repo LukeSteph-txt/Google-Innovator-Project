@@ -15,13 +15,19 @@ const teamMembers = [
     name: "Yash Maheshwari",
     title: "Title",
     image: "/profiles/yashmaheshwari.jpeg",
-    bio: "Yash is a passionate technologist with expertise in AI and machine learning. He has been working on educational technology solutions for over 5 years and is dedicated to making learning more accessible and engaging for students worldwide."
+    bio: "Yash is a passionate technologist with expertise in AI and machine learning. He has been working on improving education for years and is dedicated to making learning more accessible and engaging for students."
   },
   {
     name: "Claire Schwarzhoff",
     title: "Title",
     image: "/profiles/claireschwarzhoff.jpeg",
-    bio: "Claire is a passionate technologist with expertise in AI and machine learning. He has been working on educational technology solutions for over 5 years and is dedicated to making learning more accessible and engaging for students worldwide."
+    bio: ""
+  },
+  {
+    name: "Myra Jain",
+    title: "Title",
+    image: "/profiles/myrajain.jpg",
+    bio: ""
   }
 ]
 
