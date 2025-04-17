@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import ReactMarkdown from 'react-markdown';
 import { Download, RefreshCw, ArrowLeft, Edit, Save } from "lucide-react";
 import Navbar from "@/components/navbar";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/custom-textarea";
 
 // List of US states for dropdown
 const usStates = [

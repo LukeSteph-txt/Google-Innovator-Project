@@ -6,12 +6,6 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 const teamMembers = [
   {
-    name: "Yash Maheshwari",
-    title: "Title",
-    image: "/profiles/yashmaheshwari.jpeg",
-    bio: "Yash is a passionate technologist with expertise in AI and machine learning. He has been working on educational technology solutions for over 5 years and is dedicated to making learning more accessible and engaging for students worldwide."
-  },
-  {
     name: "Luke Stephenson",
     title: "Title",
     image: "/profiles/luke_stephenson_squareforweb.png",
@@ -24,34 +18,10 @@ const teamMembers = [
     bio: "Yash is a passionate technologist with expertise in AI and machine learning. He has been working on educational technology solutions for over 5 years and is dedicated to making learning more accessible and engaging for students worldwide."
   },
   {
-    name: "Yash Maheshwari",
+    name: "Claire Schwarzhoff",
     title: "Title",
-    image: "/profiles/yashmaheshwari.jpeg",
-    bio: "Yash is a passionate technologist with expertise in AI and machine learning. He has been working on educational technology solutions for over 5 years and is dedicated to making learning more accessible and engaging for students worldwide."
-  },
-  {
-    name: "Yash Maheshwari",
-    title: "Title",
-    image: "/profiles/yashmaheshwari.jpeg",
-    bio: "Yash is a passionate technologist with expertise in AI and machine learning. He has been working on educational technology solutions for over 5 years and is dedicated to making learning more accessible and engaging for students worldwide."
-  },
-  {
-    name: "Yash Maheshwari",
-    title: "Title",
-    image: "/profiles/yashmaheshwari.jpeg",
-    bio: "Yash is a passionate technologist with expertise in AI and machine learning. He has been working on educational technology solutions for over 5 years and is dedicated to making learning more accessible and engaging for students worldwide."
-  },
-  {
-    name: "Yash Maheshwari",
-    title: "Title",
-    image: "/profiles/yashmaheshwari.jpeg",
-    bio: "Yash is a passionate technologist with expertise in AI and machine learning. He has been working on educational technology solutions for over 5 years and is dedicated to making learning more accessible and engaging for students worldwide."
-  },
-  {
-    name: "Yash Maheshwari",
-    title: "Title",
-    image: "/profiles/yashmaheshwari.jpeg",
-    bio: "Yash is a passionate technologist with expertise in AI and machine learning. He has been working on educational technology solutions for over 5 years and is dedicated to making learning more accessible and engaging for students worldwide."
+    image: "/profiles/claireschwarzhoff.jpeg",
+    bio: "Claire is a passionate technologist with expertise in AI and machine learning. He has been working on educational technology solutions for over 5 years and is dedicated to making learning more accessible and engaging for students worldwide."
   }
 ]
 
@@ -77,6 +47,13 @@ export default function TeamCarousel() {
 
   const closeMemberPopup = () => {
     setSelectedMember(null)
+  }
+
+  const handlePopupClick = (e: React.MouseEvent) => {
+    // Only close if clicking the backdrop (not the popup content)
+    if (e.target === e.currentTarget) {
+      closeMemberPopup()
+    }
   }
 
   return (
@@ -137,8 +114,11 @@ export default function TeamCarousel() {
 
       {/* Member Bio Popup */}
       {selectedMember && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full overflow-hidden animate-fade-in">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={handlePopupClick}
+        >
+          <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto animate-fade-in my-4">
             <div className="relative">
               <button 
                 className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm p-1 rounded-full shadow-lg hover:bg-background/90 transition-colors z-10"
@@ -146,12 +126,15 @@ export default function TeamCarousel() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <div className="aspect-video relative">
-                <img
-                  src={selectedMember.image}
-                  alt={selectedMember.name}
-                  className="object-cover w-full h-full"
-                />
+              <div className="flex justify-center">
+                <div className="w-full max-w-md aspect-square relative max-h-[60vh] overflow-hidden">
+                  <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-card to-transparent z-10"></div>
+                  <img
+                    src={selectedMember.image}
+                    alt={selectedMember.name}
+                    className="object-cover w-full h-full rounded-t-lg"
+                  />
+                </div>
               </div>
               <div className="p-6">
                 <h3 className="text-2xl font-bold mb-1">{selectedMember.name}</h3>
