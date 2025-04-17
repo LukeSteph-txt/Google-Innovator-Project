@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         { role: "user", content: prompt }
       ],
       temperature: 1,
-      max_tokens: 20000,
+      max_tokens: 25000,
       top_p: 0.4,
       frequency_penalty: 0,
       presence_penalty: 0,
