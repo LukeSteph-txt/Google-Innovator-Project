@@ -11,6 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import { Download, RefreshCw, ArrowLeft, Edit, Save } from "lucide-react";
 import Navbar from "@/components/navbar";
 import { Textarea } from "@/components/ui/textarea";
+import Footer from "@/components/footer";
 
 // List of US states for dropdown
 const usStates = [
@@ -28,45 +29,55 @@ const usStates = [
 interface BaseQuestion {
   question: string;
   options: string[];
+  subQuestions?: SubQuestion[];
   setter: (value: string) => void;
 }
 
+interface SubQuestion {
+  question: string;
+  options: string[];
+  setter: (value: string) => void;
+  type: 'regular';
+}
+
 interface DropdownQuestion extends BaseQuestion {
-  dropdown: true;
-  slider?: never;
+  type: 'dropdown';
 }
 
 interface SliderQuestion extends BaseQuestion {
-  slider: true;
+  type: 'slider';
   min: number;
   max: number;
-  dropdown?: never;
 }
 
 interface RegularQuestion extends BaseQuestion {
-  dropdown?: false;
-  slider?: false;
+  type: 'regular';
 }
 
-type Question = RegularQuestion | DropdownQuestion | SliderQuestion;
+type Question = DropdownQuestion | SliderQuestion | RegularQuestion;
 
 // Define section type
-type SectionType = 'landing' | 'privacy' | 'bias' | 'learning' | 'environment' | 'results' | 'guidelines';
+type SectionType = 'landing' | 'location' | 'context' | 'demographics' | 'role' | 'devices' | 'literacy' | 'environment' | 'priorities' | 'results';
 
 export default function PolicyGenerator() {
   // State for tracking if user has started the process
   const [started, setStarted] = useState(false);
   
   // States for user responses
+  const [state, setState] = useState("");
   const [policyScope, setPolicyScope] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
-  const [state, setState] = useState("");
-  const [diversity, setDiversity] = useState("");
-  const [englishProficiency, setEnglishProficiency] = useState("");
-  const [academicIntegrity, setAcademicIntegrity] = useState("");
-  const [aiIncorporation, setAiIncorporation] = useState("");
-  const [environmentalConsciousness, setEnvironmentalConsciousness] = useState("");
-  const [environmentalCommitment, setEnvironmentalCommitment] = useState("");
+  const [role, setRole] = useState("");
+  const [devicePolicy, setDevicePolicy] = useState("");
+  const [staffDevicePercentage, setStaffDevicePercentage] = useState("");
+  const [staffGenAIFrequency, setStaffGenAIFrequency] = useState("");
+  const [studentDevicePercentage, setStudentDevicePercentage] = useState("");
+  const [studentGenAIFrequency, setStudentGenAIFrequency] = useState("");
+  const [leaderAILiteracy, setLeaderAILiteracy] = useState("");
+  const [staffAILiteracy, setStaffAILiteracy] = useState("");
+  const [studentAILiteracy, setStudentAILiteracy] = useState("");
+  const [environmentalAwareness, setEnvironmentalAwareness] = useState("");
+  const [criticalPriority, setCriticalPriority] = useState("");
   
   // State for API response
   const [response, setResponse] = useState("");
@@ -85,155 +96,199 @@ export default function PolicyGenerator() {
     try {
       // Create a dynamic context object
       const policyContext = {
-        // Privacy Section Context
-        privacyContext: (() => {
-          let privacyDetails = [];
+        // Location and Context Section
+        locationContext: (() => {
+          let locationDetails = [];
           
           // Context based on policy scope
           switch(policyScope) {
             case "A district":
-              privacyDetails.push("This policy covers a comprehensive district-wide approach to AI usage.");
+              locationDetails.push("This policy covers a comprehensive district-wide approach to AI usage.");
               break;
             case "A school":
-              privacyDetails.push("This policy is tailored to a specific school's AI integration strategy.");
+              locationDetails.push("This policy is tailored to a specific school's AI integration strategy.");
               break;
             case "A classroom":
-              privacyDetails.push("This policy focuses on classroom-level AI implementation and guidelines.");
+              locationDetails.push("This policy focuses on classroom-level AI implementation and guidelines.");
               break;
           }
   
           // Context based on age group
           switch(ageGroup) {
-            case "K-5":
-              privacyDetails.push("Special consideration must be given to the digital safety of young learners.");
-              privacyDetails.push("Parental consent and monitoring are critical for AI interactions.");
+            case "Under 13 (K-3, 4-6, 6-8)":
+              locationDetails.push("Special consideration must be given to the digital safety of young learners.");
+              locationDetails.push("Parental consent and monitoring are critical for AI interactions.");
               break;
-            case "6-8":
-              privacyDetails.push("Developing digital literacy and responsible AI use is paramount.");
-              privacyDetails.push("Introduce AI concepts with strong ethical guidelines.");
+            case "Over 13-18 (9-12)":
+              locationDetails.push("Emphasize critical thinking and ethical use of AI technologies.");
+              locationDetails.push("Prepare students for responsible AI engagement.");
               break;
-            case "9-12":
-              privacyDetails.push("Emphasize critical thinking and ethical use of AI technologies.");
-              privacyDetails.push("Prepare students for responsible AI engagement.");
+            case "College Students (Over 18)":
+              locationDetails.push("Focus on professional and academic integrity in AI usage.");
+              locationDetails.push("Emphasize research and innovation with AI tools.");
               break;
           }
   
-          return privacyDetails.join(" ");
+          return locationDetails.join(" ");
         })(),
   
-        // Bias Section Context
-        biasContext: (() => {
-          let biasDetails = [];
+        // Device Access Section
+        deviceContext: (() => {
+          let deviceDetails = [];
   
-          // Diversity context
-          switch(diversity) {
-            case "Mild":
-              biasDetails.push("Implement basic AI bias mitigation strategies.");
+          // Device policy context
+          switch(devicePolicy) {
+            case "One-to-one":
+              deviceDetails.push("Comprehensive device access enables consistent AI integration across all learning activities.");
               break;
-            case "Moderate":
-              biasDetails.push("Develop comprehensive approaches to address potential AI bias.");
-              biasDetails.push("Regular assessment of AI tools for cultural sensitivity is necessary.");
+            case "BYOD":
+              deviceDetails.push("Policy must account for varying device capabilities and ensure equitable access.");
               break;
-            case "Considerable":
-              biasDetails.push("Prioritize AI tools with robust bias detection and correction mechanisms.");
-              biasDetails.push("Implement multi-layered bias assessment protocols.");
+            case "Computer Lab":
+              deviceDetails.push("AI usage is primarily limited to scheduled lab sessions.");
               break;
-            case "Intense":
-              biasDetails.push("Critical need for AI solutions that actively promote inclusivity and representation.");
-              biasDetails.push("Develop custom AI usage guidelines that specifically address diverse learning needs.");
+            case "We have no comprehensive device policy":
+              deviceDetails.push("Policy needs to address varying levels of device access and capabilities.");
               break;
           }
   
-          // English proficiency context
-          const proficiencyLevel = parseInt(englishProficiency.split('/')[0]);
-          if (proficiencyLevel <= 3) {
-            biasDetails.push("Ensure AI tools support multilingual and translation capabilities.");
-            biasDetails.push("Provide additional language support in AI-assisted learning.");
-          } else if (proficiencyLevel <= 6) {
-            biasDetails.push("Include language support features in AI learning tools.");
+          // Staff and student usage context
+          switch(staffDevicePercentage) {
+            case "0-25%":
+              deviceDetails.push("Limited staff device access necessitates careful AI rollout planning.");
+              break;
+            case "25-50%":
+              deviceDetails.push("Moderate staff device access requires balanced AI implementation.");
+              break;
+            case "50-75%":
+              deviceDetails.push("Most staff have device access, enabling widespread AI integration.");
+              break;
+            case "75-100%":
+              deviceDetails.push("Staff are well-equipped for AI integration.");
+              break;
           }
   
-          return biasDetails.join(" ");
+          switch(studentDevicePercentage) {
+            case "0-25%":
+              deviceDetails.push("Limited student device access requires alternative AI access strategies.");
+              break;
+            case "25-50%":
+              deviceDetails.push("Mixed student device access requires flexible AI implementation.");
+              break;
+            case "50-75%":
+              deviceDetails.push("Most students have device access, enabling widespread AI integration.");
+              break;
+            case "75-100%":
+              deviceDetails.push("Students have widespread access to AI tools.");
+              break;
+          }
+  
+          return deviceDetails.join(" ");
         })(),
   
-        // Learning Section Context
-        learningContext: (() => {
-          let learningDetails = [];
+        // AI Literacy Section
+        literacyContext: (() => {
+          let literacyDetails = [];
   
-          // Academic integrity context
-          switch(academicIntegrity) {
-            case "Little issue":
-              learningDetails.push("Implement preventative AI usage guidelines.");
+          switch(leaderAILiteracy) {
+            case "0-25%":
+              literacyDetails.push("Limited leadership AI literacy necessitates extensive training programs.");
               break;
-            case "Moderate issue":
-              learningDetails.push("Develop robust AI detection and prevention strategies.");
-              learningDetails.push("Create clear guidelines on acceptable AI assistance.");
+            case "25-50%":
+              literacyDetails.push("Moderate leadership AI literacy requires additional training and support.");
               break;
-            case "Considerable issue":
-              learningDetails.push("Establish comprehensive AI academic integrity protocols.");
-              learningDetails.push("Implement advanced plagiarism and AI-generated content detection.");
+            case "50-75%":
+              literacyDetails.push("Most leaders have a good understanding of AI, enabling effective policy implementation.");
               break;
-            case "Major issue":
-              learningDetails.push("Develop a zero-tolerance approach to unauthorized AI use.");
-              learningDetails.push("Create extensive educational programs on academic honesty.");
-              learningDetails.push("Implement sophisticated AI content verification systems.");
+            case "75-100%":
+              literacyDetails.push("Strong leadership understanding of AI enables comprehensive policy implementation.");
               break;
           }
   
-          // AI incorporation context
-          switch(aiIncorporation) {
-            case "None":
-              learningDetails.push("Maintain traditional teaching methods with minimal AI integration.");
+          switch(staffAILiteracy) {
+            case "0-25%":
+              literacyDetails.push("Staff require significant training in AI usage and implementation.");
               break;
-            case "Mildly":
-              learningDetails.push("Carefully introduce AI as a supplementary learning tool.");
+            case "25-50%":
+              literacyDetails.push("Staff need moderate support in AI integration.");
               break;
-            case "Moderately":
-              learningDetails.push("Develop a balanced approach to AI-assisted learning.");
-              learningDetails.push("Create structured AI integration frameworks.");
+            case "50-75%":
+              literacyDetails.push("Most staff are prepared to implement AI in educational contexts.");
               break;
-            case "Majorly":
-              learningDetails.push("Implement comprehensive AI-driven learning strategies.");
-              learningDetails.push("Develop cutting-edge AI educational technologies.");
+            case "75-100%":
+              literacyDetails.push("Staff are well-prepared to implement AI in educational contexts.");
               break;
           }
   
-          return learningDetails.join(" ");
+          switch(studentAILiteracy) {
+            case "0-25%":
+              literacyDetails.push("Students require fundamental AI literacy education.");
+              break;
+            case "25-50%":
+              literacyDetails.push("Students need guidance in responsible AI usage.");
+              break;
+            case "50-75%":
+              literacyDetails.push("Most students are equipped to engage with AI tools responsibly.");
+              break;
+            case "75-100%":
+              literacyDetails.push("Students are well-equipped to engage with AI tools responsibly.");
+              break;
+          }
+  
+          return literacyDetails.join(" ");
         })(),
   
-        // Environmental Context
+        // Environmental Impact Section
         environmentContext: (() => {
           let environmentDetails = [];
   
-          // Environmental consciousness
-          switch(environmentalConsciousness) {
-            case "Mildly":
-              environmentDetails.push("Introduce basic awareness of AI's environmental impact.");
+          switch(environmentalAwareness) {
+            case "Not aware at all":
+              environmentDetails.push("Policy needs to establish basic environmental considerations for AI usage.");
               break;
-            case "Moderately":
-              environmentDetails.push("Develop strategies to minimize the carbon footprint of AI technologies.");
+            case "Somewhat aware":
+              environmentDetails.push("Policy should build upon existing environmental awareness.");
               break;
-            case "Majorly":
-              environmentDetails.push("Prioritize energy-efficient and sustainable AI solutions.");
-              environmentDetails.push("Implement comprehensive green computing practices.");
-              break;
-          }
-  
-          // Environmental commitment
-          switch(environmentalCommitment) {
-            case "Mildly":
-              environmentDetails.push("Begin tracking and reporting AI energy consumption.");
-              break;
-            case "Moderately":
-              environmentDetails.push("Develop a systematic approach to reducing AI-related environmental impact.");
-              break;
-            case "Majorly":
-              environmentDetails.push("Lead in sustainable AI implementation and green technology adoption.");
-              environmentDetails.push("Set ambitious goals for carbon-neutral AI usage.");
+            case "Very aware":
+              environmentDetails.push("Policy can incorporate advanced environmental impact considerations.");
               break;
           }
   
           return environmentDetails.join(" ");
+        })(),
+  
+        // Priority Section
+        priorityContext: (() => {
+          let priorityDetails = [];
+  
+          switch(criticalPriority) {
+            case "Academic Dishonesty among Students":
+              priorityDetails.push("Policy emphasizes robust academic integrity measures.");
+              break;
+            case "Data security and privacy for all users within the organization":
+              priorityDetails.push("Policy prioritizes comprehensive data protection protocols.");
+              break;
+            case "Environmental Impact":
+              priorityDetails.push("Policy focuses on sustainable AI implementation.");
+              break;
+            case "Basic Legal Compliance":
+              priorityDetails.push("Policy ensures adherence to all relevant regulations.");
+              break;
+            case "Ongoing training and AI Literacy Development":
+              priorityDetails.push("Policy emphasizes continuous learning and skill development.");
+              break;
+            case "Student Learning Outcomes":
+              priorityDetails.push("Policy centers on enhancing educational effectiveness.");
+              break;
+            case "All of the above":
+              priorityDetails.push("Policy addresses all key areas comprehensively.");
+              break;
+            case "None of the above":
+              priorityDetails.push("Policy will be customized based on specific institutional needs.");
+              break;
+          }
+  
+          return priorityDetails.join(" ");
         })()
       };
   
@@ -249,11 +304,12 @@ export default function PolicyGenerator() {
           
           Use the specific data points provided in the prompt to tailor the content to the institution's needs.
           If the institution is a district, school, or classroom, adjust the scope and language accordingly.
-          If the age group is K-5, 6-8, or 9-12, use age-appropriate language and considerations.
+          If the age group is specified, use age-appropriate language and considerations.
           If the state is specified, include relevant state-specific regulations or guidelines.
-          If diversity or English proficiency levels are mentioned, address those specific needs.
-          If academic integrity or AI incorporation levels are specified, tailor the guidelines accordingly.
-          If environmental consciousness or commitment levels are provided, adjust the environmental impact section accordingly.
+          If device access and usage patterns are mentioned, address those specific needs.
+          If AI literacy levels are specified, tailor the guidelines accordingly.
+          If environmental awareness is provided, adjust the environmental impact section accordingly.
+          If specific priorities are mentioned, emphasize those areas in the policy.
           
           ${exampleContent ? `Use the following example as a optimal reference and template for style and structure, but adapt the content to the specific parameters provided above:\n\n${exampleContent}` : ''}
         `;
@@ -287,18 +343,24 @@ export default function PolicyGenerator() {
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
         - State: ${state}
-        - Student Body Diversity: ${diversity}
-        - English Proficiency: ${englishProficiency}
-        - Academic Integrity: ${academicIntegrity}
-        - AI Incorporation Level: ${aiIncorporation}
-        - Environmental Consciousness: ${environmentalConsciousness}
-        - Environmental Commitment: ${environmentalCommitment}
+        - Role: ${role}
+        - Device Policy: ${devicePolicy}
+        - Staff Device Access: ${staffDevicePercentage}
+        - Staff GenAI Usage: ${staffGenAIFrequency}
+        - Student Device Access: ${studentDevicePercentage}
+        - Student GenAI Usage: ${studentGenAIFrequency}
+        - Leader AI Literacy: ${leaderAILiteracy}
+        - Staff AI Literacy: ${staffAILiteracy}
+        - Student AI Literacy: ${studentAILiteracy}
+        - Environmental Awareness: ${environmentalAwareness}
+        - Critical Priority: ${criticalPriority}
         
         CONTEXTUAL INSIGHTS:
-        ${policyContext.privacyContext}
-        ${policyContext.biasContext}
-        ${policyContext.learningContext}
+        ${policyContext.locationContext}
+        ${policyContext.deviceContext}
+        ${policyContext.literacyContext}
         ${policyContext.environmentContext}
+        ${policyContext.priorityContext}
         
         Generate the Introduction and Rationale section of the AI policy. This section should:
         - Explain the purpose of the policy
@@ -306,9 +368,12 @@ export default function PolicyGenerator() {
         - Outline the benefits of AI in education
         - Set the tone for the rest of the policy
         - Reference the specific context of this ${policyScope} (${ageGroup} students in ${state})
-        - Address the specific needs related to diversity (${diversity}) and English proficiency (${englishProficiency})
-        - Mention the level of AI incorporation (${aiIncorporation}) and academic integrity concerns (${academicIntegrity})
-        - Include environmental considerations based on consciousness (${environmentalConsciousness}) and commitment (${environmentalCommitment})
+        - Address the specific needs related to device access and usage patterns
+        - Mention the level of AI literacy across different groups
+        - Include environmental considerations based on awareness level
+        - Emphasize the critical priority identified
+        
+        IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
       
       const permittedUsePrompt = `
@@ -316,11 +381,18 @@ export default function PolicyGenerator() {
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
         - State: ${state}
-        - AI Incorporation Level: ${aiIncorporation}
-        - Academic Integrity: ${academicIntegrity}
+        - Device Policy: ${devicePolicy}
+        - Staff Device Access: ${staffDevicePercentage}
+        - Staff GenAI Usage: ${staffGenAIFrequency}
+        - Student Device Access: ${studentDevicePercentage}
+        - Student GenAI Usage: ${studentGenAIFrequency}
+        - Leader AI Literacy: ${leaderAILiteracy}
+        - Staff AI Literacy: ${staffAILiteracy}
+        - Student AI Literacy: ${studentAILiteracy}
         
         CONTEXTUAL INSIGHTS:
-        ${policyContext.learningContext}
+        ${policyContext.deviceContext}
+        ${policyContext.literacyContext}
         
         Generate the Permitted Use section of the AI policy. This section should:
         - Clearly outline what uses of AI are permitted and encouraged
@@ -328,9 +400,11 @@ export default function PolicyGenerator() {
         - Explain how AI can supplement student learning
         - Include guidelines for teachers on how to incorporate AI
         - Tailor the permitted uses to the specific age group (${ageGroup})
-        - Consider the level of AI incorporation desired (${aiIncorporation})
-        - Address academic integrity concerns (${academicIntegrity})
+        - Consider the device access patterns and capabilities
+        - Address AI literacy levels across different groups
         - Include state-specific considerations for ${state}
+        
+        IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
       
       const prohibitedUsePrompt = `
@@ -338,11 +412,7 @@ export default function PolicyGenerator() {
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
         - State: ${state}
-        - Academic Integrity: ${academicIntegrity}
-        - AI Incorporation Level: ${aiIncorporation}
-        
-        CONTEXTUAL INSIGHTS:
-        ${policyContext.learningContext}
+        - Critical Priority: ${criticalPriority}
         
         Generate the Prohibited Use section of the AI policy. This section should:
         - Clearly outline what uses of AI are prohibited
@@ -350,9 +420,10 @@ export default function PolicyGenerator() {
         - Provide specific examples of unacceptable AI usage
         - Explain the consequences of policy violations
         - Tailor the prohibited uses to the specific age group (${ageGroup})
-        - Consider the level of AI incorporation (${aiIncorporation})
-        - Address the specific academic integrity concerns (${academicIntegrity})
+        - Address the specific critical priority (${criticalPriority})
         - Include state-specific considerations for ${state}
+        
+        IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
       
       const staffTrainingPrompt = `
@@ -360,8 +431,9 @@ export default function PolicyGenerator() {
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
         - State: ${state}
-        - AI Incorporation Level: ${aiIncorporation}
-        - Academic Integrity: ${academicIntegrity}
+        - Leader AI Literacy: ${leaderAILiteracy}
+        - Staff AI Literacy: ${staffAILiteracy}
+        - Critical Priority: ${criticalPriority}
         
         Generate the Commitment to Staff Training section of the AI policy. This section should:
         - Outline the school's commitment to training staff on AI usage
@@ -369,9 +441,11 @@ export default function PolicyGenerator() {
         - Explain how staff will be supported in implementing AI tools
         - Include guidelines for ongoing professional development
         - Tailor the training approach to the specific age group (${ageGroup})
-        - Consider the level of AI incorporation (${aiIncorporation})
-        - Address the specific academic integrity concerns (${academicIntegrity})
+        - Address the current AI literacy levels
+        - Address the specific critical priority (${criticalPriority})
         - Include state-specific considerations for ${state}
+        
+        IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most leaders," "some staff," "limited literacy," etc.
       `;
       
       const privacyPrompt = `
@@ -379,11 +453,7 @@ export default function PolicyGenerator() {
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
         - State: ${state}
-        - Student Body Diversity: ${diversity}
-        - English Proficiency: ${englishProficiency}
-        
-        CONTEXTUAL INSIGHTS:
-        ${policyContext.privacyContext}
+        - Critical Priority: ${criticalPriority}
         
         Generate the Privacy & Transparency section of the AI policy. This section should:
         - Address data privacy concerns
@@ -391,9 +461,10 @@ export default function PolicyGenerator() {
         - Explain how student data will be protected
         - Include guidelines for transparency in AI usage
         - Tailor privacy considerations to the specific age group (${ageGroup})
-        - Consider the diversity of the student body (${diversity})
-        - Address language considerations based on English proficiency (${englishProficiency})
+        - Address the specific critical priority (${criticalPriority})
         - Include state-specific privacy regulations for ${state}
+        
+        IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
       
       const biasPrompt = `
@@ -401,11 +472,9 @@ export default function PolicyGenerator() {
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
         - State: ${state}
-        - Student Body Diversity: ${diversity}
-        - English Proficiency: ${englishProficiency}
-        
-        CONTEXTUAL INSIGHTS:
-        ${policyContext.biasContext}
+        - Device Policy: ${devicePolicy}
+        - Staff Device Access: ${staffDevicePercentage}
+        - Student Device Access: ${studentDevicePercentage}
         
         Generate the Bias & Accessibility section of the AI policy. This section should:
         - Address potential bias in AI tools
@@ -413,9 +482,10 @@ export default function PolicyGenerator() {
         - Explain how the policy promotes inclusivity
         - Include guidelines for selecting unbiased AI tools
         - Tailor bias considerations to the specific age group (${ageGroup})
-        - Address the specific diversity needs (${diversity})
-        - Include language considerations based on English proficiency (${englishProficiency})
+        - Address device access disparities
         - Include state-specific considerations for ${state}
+        
+        IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
       
       const environmentalPrompt = `
@@ -423,11 +493,8 @@ export default function PolicyGenerator() {
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
         - State: ${state}
-        - Environmental Consciousness: ${environmentalConsciousness}
-        - Environmental Commitment: ${environmentalCommitment}
-        
-        CONTEXTUAL INSIGHTS:
-        ${policyContext.environmentContext}
+        - Environmental Awareness: ${environmentalAwareness}
+        - Critical Priority: ${criticalPriority}
         
         Generate the Environmental Impact section of the AI policy. This section should:
         - Address the environmental impact of AI technologies
@@ -435,9 +502,11 @@ export default function PolicyGenerator() {
         - Explain how the school will promote sustainable AI usage
         - Include specific environmental goals and commitments
         - Tailor environmental considerations to the specific age group (${ageGroup})
-        - Address the level of environmental consciousness (${environmentalConsciousness})
-        - Include specific commitments based on environmental commitment level (${environmentalCommitment})
+        - Address the level of environmental awareness (${environmentalAwareness})
+        - Include specific commitments based on critical priority (${criticalPriority})
         - Include state-specific environmental considerations for ${state}
+        
+        IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
       
       const accountabilityPrompt = `
@@ -445,8 +514,7 @@ export default function PolicyGenerator() {
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
         - State: ${state}
-        - Academic Integrity: ${academicIntegrity}
-        - AI Incorporation Level: ${aiIncorporation}
+        - Critical Priority: ${criticalPriority}
         
         Generate the Accountability & Enforcement section of the AI policy. This section should:
         - Outline how the policy will be enforced
@@ -454,9 +522,10 @@ export default function PolicyGenerator() {
         - Explain the consequences of policy violations
         - Include guidelines for monitoring and evaluation
         - Tailor accountability measures to the specific age group (${ageGroup})
-        - Address the specific academic integrity concerns (${academicIntegrity})
-        - Consider the level of AI incorporation (${aiIncorporation})
+        - Address the specific critical priority (${criticalPriority})
         - Include state-specific considerations for ${state}
+        
+        IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
       
       const conclusionPrompt = `
@@ -464,18 +533,23 @@ export default function PolicyGenerator() {
         - Policy Scope: ${policyScope}
         - Age Group: ${ageGroup}
         - State: ${state}
-        - Student Body Diversity: ${diversity}
-        - English Proficiency: ${englishProficiency}
-        - Academic Integrity: ${academicIntegrity}
-        - AI Incorporation Level: ${aiIncorporation}
-        - Environmental Consciousness: ${environmentalConsciousness}
-        - Environmental Commitment: ${environmentalCommitment}
+        - Device Policy: ${devicePolicy}
+        - Staff Device Access: ${staffDevicePercentage}
+        - Staff GenAI Usage: ${staffGenAIFrequency}
+        - Student Device Access: ${studentDevicePercentage}
+        - Student GenAI Usage: ${studentGenAIFrequency}
+        - Leader AI Literacy: ${leaderAILiteracy}
+        - Staff AI Literacy: ${staffAILiteracy}
+        - Student AI Literacy: ${studentAILiteracy}
+        - Environmental Awareness: ${environmentalAwareness}
+        - Critical Priority: ${criticalPriority}
         
         CONTEXTUAL INSIGHTS:
-        ${policyContext.privacyContext}
-        ${policyContext.biasContext}
-        ${policyContext.learningContext}
+        ${policyContext.locationContext}
+        ${policyContext.deviceContext}
+        ${policyContext.literacyContext}
         ${policyContext.environmentContext}
+        ${policyContext.priorityContext}
         
         Generate the Conclusion section of the AI policy. This section should:
         - Summarize the key points of the policy
@@ -483,9 +557,12 @@ export default function PolicyGenerator() {
         - Outline the next steps for implementation
         - Include a statement about the policy's evolution over time
         - Reference the specific context of this ${policyScope} (${ageGroup} students in ${state})
-        - Address the specific needs related to diversity (${diversity}) and English proficiency (${englishProficiency})
-        - Mention the level of AI incorporation (${aiIncorporation}) and academic integrity concerns (${academicIntegrity})
-        - Include environmental considerations based on consciousness (${environmentalConsciousness}) and commitment (${environmentalCommitment})
+        - Address the specific needs related to device access and usage patterns
+        - Mention the level of AI literacy across different groups
+        - Include environmental considerations based on awareness level
+        - Emphasize the critical priority identified
+        
+        IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
 
       // Example content for each section
@@ -697,62 +774,113 @@ ${conclusion}
   // Questions organized by sections
   const sections: Record<SectionType, Question[]> = {
     landing: [],
-    privacy: [
-      {
-        question: "Is this policy for:",
-        options: ["A district", "A school", "A classroom"],
-        setter: setPolicyScope
-      },
-      {
-        question: "How old are the impacted students?",
-        options: ["K-5", "6-8", "9-12"],
-        setter: setAgeGroup
-      },
+    location: [
       {
         question: "What state is your school located in?",
-        dropdown: true,
+        type: 'dropdown',
         options: usStates,
         setter: setState
       }
     ],
-    bias: [
+    context: [
       {
-        question: "How diverse is your student body?",
-        options: ["Mild", "Moderate", "Considerable", "Intense"],
-        setter: setDiversity
-      },
-      {
-        question: "What is the English proficiency rate at your school/district?",
-        slider: true,
-        min: 1,
-        max: 10,
-        options: [],
-        setter: setEnglishProficiency
+        question: "Is this policy for:",
+        type: 'regular',
+        options: ["A district", "A school", "A classroom"],
+        setter: setPolicyScope
       }
     ],
-    learning: [
+    demographics: [
       {
-        question: "How much of an issue is academic integrity at your school?",
-        options: ["Little issue", "Moderate issue", "Considerable issue", "Major issue"],
-        setter: setAcademicIntegrity
-      },
-      {
-        question: "How much would you like to incorporate AI in student learning?",
-        options: ["None", "Mildly", "Moderately", "Majorly"],
-        setter: setAiIncorporation
+        question: "How old are the impacted students?",
+        type: 'regular',
+        options: ["Under 13 (K-3, 4-6, 6-8)", "Over 13-18 (9-12)", "College Students (Over 18)"],
+        setter: setAgeGroup
       }
     ],
-    guidelines: [],
+    role: [
+      {
+        question: "I am:",
+        type: 'regular',
+        options: [
+          "A district-level leader (Superintendent, etc.)", 
+          "A district-level tech Leader (CTO or IT Director, etc.)", 
+          "A site leader (Principal, etc.)", 
+          "A classroom teacher", 
+          "Other (consultant, tech trainer, etc.)"
+        ],
+        setter: setRole
+      }
+    ],
+    devices: [
+      {
+        question: "What is your device policy?",
+        type: 'regular',
+        options: ["One-to-one", "BYOD", "Computer Lab", "We have no comprehensive device policy"],
+        setter: setDevicePolicy
+      },
+      {
+        question: "What percentage of your staff would you say has a device capable of accessing GenAI regularly?",
+        type: 'regular',
+        options: ["0-25%", "25-50%", "50-75%", "75-100%"],
+        setter: setStaffDevicePercentage
+      },
+      {
+        question: "How frequently would you say your staff is accessing any GenAI tools?",
+        type: 'regular',
+        options: ["Never", "Once in a while", "At least once a week", "Daily"],
+        setter: setStaffGenAIFrequency
+      },
+      {
+        question: "What percentage of your student body has a device capable of accessing GenAI?",
+        type: 'regular',
+        options: ["0-25%", "25-50%", "50-75%", "75-100%"],
+        setter: setStudentDevicePercentage
+      },
+      {
+        question: "How frequently would you say your students are accessing any GenAI tools?",
+        type: 'regular',
+        options: ["Never", "Once in a while", "At least once a week", "Daily"],
+        setter: setStudentGenAIFrequency
+      }
+    ],
+    literacy: [
+      {
+        question: "What percentage of your staff would you say has basic AI literacy?",
+        type: 'regular',
+        options: ["0-25%", "25-50%", "50-75%", "75-100%"],
+        setter: setStaffAILiteracy
+      },
+      {
+        question: "What percentage of your students would you say has basic AI literacy?",
+        type: 'regular',
+        options: ["0-25%", "25-50%", "50-75%", "75-100%"],
+        setter: setStudentAILiteracy
+      }
+    ],
     environment: [
       {
-        question: "How environmentally conscious is your campus?",
-        options: ["Mildly", "Moderately", "Majorly"],
-        setter: setEnvironmentalConsciousness
-      },
+        question: "How aware is your organization of the environmental impact of GenAI?",
+        type: 'regular',
+        options: ["Not aware at all", "Somewhat aware", "Very aware"],
+        setter: setEnvironmentalAwareness
+      }
+    ],
+    priorities: [
       {
-        question: "How committed is your school to positive environmental impact?",
-        options: ["Mildly", "Moderately", "Majorly"],
-        setter: setEnvironmentalCommitment
+        question: "What is the most critical item that you want the policy to address?",
+        type: 'regular',
+        options: [
+          "Academic Dishonesty among Students",
+          "Data security and privacy for all users within the organization",
+          "Environmental Impact",
+          "Basic Legal Compliance",
+          "Ongoing training and AI Literacy Development",
+          "Student Learning Outcomes",
+          "All of the above",
+          "None of the above"
+        ],
+        setter: setCriticalPriority
       }
     ],
     results: []
@@ -761,7 +889,7 @@ ${conclusion}
   // Function to start the process
   const startProcess = () => {
     setStarted(true);
-    setSection("privacy");
+    setSection("location");
     setQuestionIndex(0);
   };
 
@@ -778,18 +906,13 @@ ${conclusion}
       setQuestionIndex(questionIndex + 1);
     } else {
       // Determine next section
-      const sectionOrder: SectionType[] = ["landing", "privacy", "bias", "learning", "guidelines", "environment", "results"]; 
+      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "devices", "literacy", "environment", "priorities", "results"]; 
       const currentIndex = sectionOrder.indexOf(section);
       const nextSection = sectionOrder[currentIndex + 1] as SectionType;
       
       if (nextSection) {
         setSection(nextSection);
         setQuestionIndex(0);
-        
-        // Skip guidelines section as it has no questions
-        if (nextSection === "guidelines" && sections[nextSection].length === 0) {
-          setSection(sectionOrder[currentIndex + 2] as SectionType);
-        }
         
         // Generate policy when reaching results
         if (nextSection === "results") {
@@ -805,7 +928,7 @@ ${conclusion}
       setQuestionIndex(questionIndex - 1);
     } else {
       // Go back to previous section
-      const sectionOrder: SectionType[] = ["landing", "privacy", "bias", "learning", "guidelines", "environment", "results"];
+      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "devices", "literacy", "environment", "priorities", "results"];
       const currentIndex = sectionOrder.indexOf(section);
       const prevSection = sectionOrder[currentIndex - 1] as SectionType;
       
@@ -821,11 +944,14 @@ ${conclusion}
   const getSectionTitle = () => {
     const titles: Record<SectionType, string> = {
       landing: "Welcome to AI Policy Pathway",
-      privacy: "Privacy Considerations",
-      bias: "Bias Assessment",
-      learning: "Student Learning",
-      guidelines: "Guidelines and Laws",
+      location: "Geographical Location",
+      context: "Policy Context",
+      demographics: "Student Demographics",
+      role: "Your Role",
+      devices: "Device Access",
+      literacy: "AI Literacy Level",
       environment: "Environmental Impact",
+      priorities: "Policy Priorities",
       results: "Your AI Policy"
     };
     return titles[section];
@@ -840,20 +966,8 @@ ${conclusion}
   };
 
   // Type guard functions
-  const isSliderQuestion = (question: Question | null): question is SliderQuestion => {
-    return question !== null && 'slider' in question && question.slider === true;
-  };
-
   const isDropdownQuestion = (question: Question | null): question is DropdownQuestion => {
-    return question !== null && 'dropdown' in question && question.dropdown === true;
-  };
-
-  // Handle slider change
-  const handleSliderChange = (value: number[]) => {
-    const sliderValueElement = document.getElementById("sliderValue");
-    if (sliderValueElement) {
-      sliderValueElement.textContent = value[0].toString();
-    }
+    return question !== null && 'type' in question && question.type === 'dropdown';
   };
 
   // Function to handle policy editing
@@ -893,21 +1007,27 @@ ${conclusion}
           {section !== 'landing' && section !== 'results' && (
             <div className="mb-8">
               <div className="flex justify-between mb-2 text-sm">
-                <span>Privacy</span>
-                <span>Bias</span>
-                <span>Learning</span>
+                <span>Location</span>
+                <span>Context</span>
+                <span>Demographics</span>
+                <span>Role</span>
+                <span>Devices</span>
+                <span>Literacy</span>
                 <span>Environment</span>
-                <span>Results</span>
+                <span>Priorities</span>
               </div>
               <Progress 
                 value={(() => {
                   const sectionValues: Record<SectionType, number> = { 
                     landing: 0,
-                    privacy: 20, 
-                    bias: 40, 
-                    learning: 60, 
-                    guidelines: 80, 
-                    environment: 80, 
+                    location: 12.5, 
+                    context: 25, 
+                    demographics: 37.5, 
+                    role: 50, 
+                    devices: 62.5, 
+                    literacy: 75, 
+                    environment: 87.5, 
+                    priorities: 100, 
                     results: 100 
                   };
                   return sectionValues[section];
@@ -963,7 +1083,7 @@ ${conclusion}
               </CardHeader>
               <CardContent>
                 {/* Regular options */}
-                {!isDropdownQuestion(getCurrentQuestion()) && !isSliderQuestion(getCurrentQuestion()) && (
+                {!isDropdownQuestion(getCurrentQuestion()) && (
                   <div className="grid grid-cols-1 gap-4">
                     {getCurrentQuestion()!.options.map((option, i) => (
                       <Button
@@ -991,31 +1111,6 @@ ${conclusion}
                     </SelectContent>
                   </Select>
                 )}
-                
-                {/* Slider */}
-                {isSliderQuestion(getCurrentQuestion()) && (() => {
-                  const question = getCurrentQuestion() as SliderQuestion;
-                  return (
-                    <div className="space-y-4">
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Low ({question.min})</span>
-                        <span>High ({question.max})</span>
-                      </div>
-                      <Slider 
-                        defaultValue={[Math.floor((question.max + question.min) / 2)]}
-                        min={question.min}
-                        max={question.max}
-                        step={1}
-                        onValueChange={handleSliderChange}
-                        onValueCommit={(value) => handleNext(value[0] + "/10")}
-                        className="py-4"
-                      />
-                      <div className="text-center text-sm font-medium">
-                        Selected: <span id="sliderValue">{Math.floor((question.max + question.min) / 2)}</span>
-                      </div>
-                    </div>
-                  );
-                })()}
               </CardContent>
             </Card>
           )}
@@ -1305,6 +1400,9 @@ ${conclusion}
               </CardFooter>
             </Card>
           )}
+        </div>
+        <div className="mt-16">
+          <Footer />
         </div>
       </div>
     </div>

@@ -14,7 +14,7 @@ export default function AboutUs() {
             About Us
           </h2>
           <p className="text-lg text-muted-foreground">
-            Building the future of education, one innovation at a time
+            Empowering educational institutions to embrace AI responsibly and effectively
           </p>
         </div>
 
@@ -22,12 +22,12 @@ export default function AboutUs() {
           <div
             className="space-y-6 animate-slide-in-left"
           >
-            <h3 className="text-2xl font-semibold">Our Journey</h3>
+            <h3 className="text-2xl font-semibold">Our Mission</h3>
             <p className="text-muted-foreground leading-relaxed">
-              Born from a passion for transforming education, our journey began with a simple yet powerful vision: to make learning more accessible, engaging, and effective for everyone. What started as a small team of innovators has grown into a community of educators, technologists, and dreamers.
+              We are dedicated to helping educational institutions navigate the complex landscape of artificial intelligence in education. Our platform provides comprehensive tools and resources to create customized AI policies that ensure safe, ethical, and effective implementation of AI technologies in schools.
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              Through countless hours of research, development, and collaboration with educators worldwide, we've created solutions that are reshaping how students learn and teachers teach.
+              Through our AI Policy Generator, we empower schools and districts to establish clear guidelines for AI usage, protect student privacy, and maximize the educational benefits of AI while minimizing potential risks.
             </p>
           </div>
 
@@ -37,23 +37,23 @@ export default function AboutUs() {
             <div className="aspect-square rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-8">
               <div className="h-full w-full rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-white/10">
                 <div className="p-6 space-y-4">
-                  <h4 className="text-xl font-semibold">Our Mission</h4>
+                  <h4 className="text-xl font-semibold">Our Approach</h4>
                   <ul className="space-y-3">
                     <li className="flex items-start gap-3">
                       <span className="text-blue-500">✦</span>
-                      <span className="text-muted-foreground">Empowering educators with innovative tools</span>
+                      <span className="text-muted-foreground">Customized policy generation for your institution's needs</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="text-purple-500">✦</span>
-                      <span className="text-muted-foreground">Creating engaging learning experiences</span>
+                      <span className="text-muted-foreground">Comprehensive coverage of AI implementation guidelines</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="text-blue-500">✦</span>
-                      <span className="text-muted-foreground">Breaking down barriers to education</span>
+                      <span className="text-muted-foreground">Focus on privacy, security, and ethical AI use</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="text-purple-500">✦</span>
-                      <span className="text-muted-foreground">Fostering a community of lifelong learners</span>
+                      <span className="text-muted-foreground">Support for staff training and AI literacy</span>
                     </li>
                   </ul>
                 </div>

@@ -1,25 +1,15 @@
-import { Brain, BookOpen, Shield, Zap } from "lucide-react"
+import { Brain, Shield } from "lucide-react"
 
 const features = [
   {
     name: "AI Policy Generator",
-    description: "Create customized AI policies tailored to your educational institution's specific needs and requirements.",
+    description: "Create comprehensive, customized AI policies for your school or district that cover implementation guidelines, privacy protection, and ethical usage standards.",
     icon: Brain,
   },
   {
-    name: "Educational Resources",
-    description: "Access comprehensive guides and resources on implementing AI in educational settings.",
-    icon: BookOpen,
-  },
-  {
-    name: "Privacy & Security",
-    description: "Ensure student data protection with AI policies that prioritize privacy and security.",
+    name: "Safe AI Implementation",
+    description: "Get guidance on implementing AI tools safely in your educational institution, ensuring student privacy and data security while maximizing learning benefits.",
     icon: Shield,
-  },
-  {
-    name: "Innovative Learning",
-    description: "Enhance student engagement and learning outcomes through responsible AI integration.",
-    icon: Zap,
   },
 ]
 
