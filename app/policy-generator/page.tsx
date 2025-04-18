@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -91,6 +91,7 @@ export default function PolicyGenerator() {
   const [questionIndex, setQuestionIndex] = useState(0);
 
   const policyRef = useRef<HTMLDivElement>(null);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   async function generatePolicy() {
     setLoading(true);
@@ -950,7 +951,7 @@ ${conclusion}
       context: "Policy Context",
       demographics: "Student Demographics",
       role: "Your Role",
-      teacherDevices: "Teacher Device Access",
+      teacherDevices: "Teacher Device Policy",
       studentDevices: "Student Device Access",
       teacherAIUsage: "Teacher GenAI Usage",
       studentAIUsage: "Student GenAI Usage",
@@ -1021,6 +1022,29 @@ ${conclusion}
       });
     }
   };
+
+  // Effect for rotating loading messages
+  useEffect(() => {
+    if (loading) {
+      const messages = [
+        "Analyzing school details...",
+        "Generating school policy...",
+        "Refining GenAI policy...",
+        "Finalizing details...",
+        "Styling the policy..."
+      ];
+      
+      let currentIndex = 0;
+      setLoadingMessage(messages[currentIndex]);
+      
+      const interval = setInterval(() => {
+        currentIndex = (currentIndex + 1) % messages.length;
+        setLoadingMessage(messages[currentIndex]);
+      }, 7000); // Change message every 7 seconds
+      
+      return () => clearInterval(interval);
+    }
+  }, [loading]);
 
   // Render the priorities section with checkboxes and submit button
   const renderPrioritiesSection = () => {
@@ -1113,7 +1137,7 @@ ${conclusion}
                 <span>Priorities</span>
               </div>
               <Progress 
-                value={(() => {
+                value={loading ? 100 : (() => {
                   // Define the section order
                   const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
                   
@@ -1271,9 +1295,9 @@ ${conclusion}
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                    <p className="text-muted-foreground">Generating your AI policy...</p>
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-primary mb-6"></div>
+                    <p className="text-xl font-medium text-primary">{loadingMessage}</p>
                   </div>
                 ) : (
                   <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert" ref={policyRef}>

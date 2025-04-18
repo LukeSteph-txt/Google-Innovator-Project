@@ -7,27 +7,27 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 const teamMembers = [
   {
     name: "Luke Stephenson",
-    title: "Title",
+    title: "Class of 2025",
     image: "/profiles/luke_stephenson_squareforweb.png",
     bio: "Luke is a software developer with a background in web technologies. He specializes in creating intuitive user interfaces and has a keen interest in educational software that helps students learn more effectively."
   },
   {
     name: "Yash Maheshwari",
-    title: "Title",
+    title: "Class of 2027",
     image: "/profiles/yashmaheshwari.jpeg",
     bio: "Yash is a passionate technologist with expertise in AI and machine learning. He has been working on improving education for years and is dedicated to making learning more accessible and engaging for students."
   },
   {
     name: "Claire Schwarzhoff",
-    title: "Title",
+    title: "Class of 2026",
     image: "/profiles/claireschwarzhoff.jpeg",
     bio: "Claire Schwarzhoff is a distinguished leader in AI literacy and policy implementation, with a strong foundation in computer science and machine learning. She is dedicated to advancing AI awareness and education, with a focus on promoting accessibility and fostering informed engagement across educational communities."
   },
   {
-    name: "Myra Jain",
-    title: "Title",
-    image: "/profiles/myrajain.jpg",
-    bio: ""
+    name: "Kip Glazer",
+    title: "Principal",
+    image: "/profiles/kipglazer.jpg",
+    bio: "Dr. Glazer is a proud principal of Mountain View High School. She is a Google Innovator interested in supporting students to work on meaningful technology projects that focus on the effective and ethical use of GenAI and AI-enabled tools."
   }
 ]
 
