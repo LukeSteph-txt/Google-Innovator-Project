@@ -57,7 +57,7 @@ interface RegularQuestion extends BaseQuestion {
 type Question = DropdownQuestion | SliderQuestion | RegularQuestion;
 
 // Define section type
-type SectionType = 'landing' | 'location' | 'context' | 'demographics' | 'role' | 'devices' | 'literacy' | 'environment' | 'priorities' | 'results';
+type SectionType = 'landing' | 'location' | 'context' | 'demographics' | 'role' | 'teacherDevices' | 'studentDevices' | 'teacherAIUsage' | 'studentAIUsage' | 'staffAIliteracy' | 'studentAIliteracy' | 'environment' | 'priorities' | 'results';
 
 export default function PolicyGenerator() {
   // State for tracking if user has started the process
@@ -78,6 +78,7 @@ export default function PolicyGenerator() {
   const [studentAILiteracy, setStudentAILiteracy] = useState("");
   const [environmentalAwareness, setEnvironmentalAwareness] = useState("");
   const [criticalPriority, setCriticalPriority] = useState("");
+  const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
   
   // State for API response
   const [response, setResponse] = useState("");
@@ -279,12 +280,6 @@ export default function PolicyGenerator() {
               break;
             case "Student Learning Outcomes":
               priorityDetails.push("Policy centers on enhancing educational effectiveness.");
-              break;
-            case "All of the above":
-              priorityDetails.push("Policy addresses all key areas comprehensively.");
-              break;
-            case "None of the above":
-              priorityDetails.push("Policy will be customized based on specific institutional needs.");
               break;
           }
   
@@ -762,12 +757,15 @@ ${conclusion}
         setResponse("No valid response received during final proofing.");
         setEditedPolicy("No valid response received during final proofing.");
       }
+      
+      // Return a resolved promise to indicate success
+      return Promise.resolve();
     } catch (error) {
       console.error("Error generating policy:", error);
       setResponse("An error occurred while generating the policy. Please try again.");
       setEditedPolicy("An error occurred while generating the policy. Please try again.");
-    } finally {
-      setLoading(false);
+      // Return a rejected promise to indicate failure
+      return Promise.reject(error);
     }
   }
   
@@ -812,7 +810,7 @@ ${conclusion}
         setter: setRole
       }
     ],
-    devices: [
+    teacherDevices: [
       {
         question: "What is your device policy?",
         type: 'regular',
@@ -820,23 +818,29 @@ ${conclusion}
         setter: setDevicePolicy
       },
       {
-        question: "What percentage of your staff would you say has a device capable of accessing GenAI regularly?",
+        question: "What percentage of your teachers would you say has a device capable of accessing GenAI regularly?",
         type: 'regular',
         options: ["0-25%", "25-50%", "50-75%", "75-100%"],
         setter: setStaffDevicePercentage
-      },
+      }
+    ],
+    studentDevices: [
       {
-        question: "How frequently would you say your staff is accessing any GenAI tools?",
-        type: 'regular',
-        options: ["Never", "Once in a while", "At least once a week", "Daily"],
-        setter: setStaffGenAIFrequency
-      },
-      {
-        question: "What percentage of your student body has a device capable of accessing GenAI?",
+        question: "What percentage of your students has a device capable of accessing GenAI?",
         type: 'regular',
         options: ["0-25%", "25-50%", "50-75%", "75-100%"],
         setter: setStudentDevicePercentage
-      },
+      }
+    ],
+    teacherAIUsage: [
+      {
+        question: "How frequently would you say your teachers are accessing any GenAI tools?",
+        type: 'regular',
+        options: ["Never", "Once in a while", "At least once a week", "Daily"],
+        setter: setStaffGenAIFrequency
+      }
+    ],
+    studentAIUsage: [
       {
         question: "How frequently would you say your students are accessing any GenAI tools?",
         type: 'regular',
@@ -844,13 +848,15 @@ ${conclusion}
         setter: setStudentGenAIFrequency
       }
     ],
-    literacy: [
+    staffAIliteracy: [
       {
         question: "What percentage of your staff would you say has basic AI literacy?",
         type: 'regular',
         options: ["0-25%", "25-50%", "50-75%", "75-100%"],
         setter: setStaffAILiteracy
       },
+    ],
+    studentAIliteracy: [
       {
         question: "What percentage of your students would you say has basic AI literacy?",
         type: 'regular',
@@ -868,7 +874,7 @@ ${conclusion}
     ],
     priorities: [
       {
-        question: "What is the most critical item that you want the policy to address?",
+        question: "What is the most critical item that you want the policy to address? (Select a maximum of two)",
         type: 'regular',
         options: [
           "Academic Dishonesty among Students",
@@ -876,9 +882,7 @@ ${conclusion}
           "Environmental Impact",
           "Basic Legal Compliance",
           "Ongoing training and AI Literacy Development",
-          "Student Learning Outcomes",
-          "All of the above",
-          "None of the above"
+          "Student Learning Outcomes"
         ],
         setter: setCriticalPriority
       }
@@ -906,7 +910,7 @@ ${conclusion}
       setQuestionIndex(questionIndex + 1);
     } else {
       // Determine next section
-      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "devices", "literacy", "environment", "priorities", "results"]; 
+      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"]; 
       const currentIndex = sectionOrder.indexOf(section);
       const nextSection = sectionOrder[currentIndex + 1] as SectionType;
       
@@ -914,10 +918,8 @@ ${conclusion}
         setSection(nextSection);
         setQuestionIndex(0);
         
-        // Generate policy when reaching results
-        if (nextSection === "results") {
-          generatePolicy();
-        }
+        // Don't automatically generate policy when reaching results
+        // The user will need to click the submit button
       }
     }
   };
@@ -928,7 +930,7 @@ ${conclusion}
       setQuestionIndex(questionIndex - 1);
     } else {
       // Go back to previous section
-      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "devices", "literacy", "environment", "priorities", "results"];
+      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
       const currentIndex = sectionOrder.indexOf(section);
       const prevSection = sectionOrder[currentIndex - 1] as SectionType;
       
@@ -948,8 +950,12 @@ ${conclusion}
       context: "Policy Context",
       demographics: "Student Demographics",
       role: "Your Role",
-      devices: "Device Access",
-      literacy: "AI Literacy Level",
+      teacherDevices: "Teacher Device Access",
+      studentDevices: "Student Device Access",
+      teacherAIUsage: "Teacher GenAI Usage",
+      studentAIUsage: "Student GenAI Usage",
+      staffAIliteracy: "Staff GenAI Literacy Level",
+      studentAIliteracy: "Student GenAI Literacy Level",
       environment: "Environmental Impact",
       priorities: "Policy Priorities",
       results: "Your AI Policy"
@@ -984,6 +990,99 @@ ${conclusion}
     setEditedPolicy(e.target.value);
   };
 
+  // Function to handle priority selection
+  const handlePrioritySelection = (priority: string) => {
+    if (selectedPriorities.includes(priority)) {
+      // Remove priority if already selected
+      setSelectedPriorities(selectedPriorities.filter(p => p !== priority));
+    } else if (selectedPriorities.length < 2) {
+      // Add priority if less than 2 are selected
+      setSelectedPriorities([...selectedPriorities, priority]);
+    }
+  };
+
+  // Function to handle priority submission
+  const handlePrioritySubmit = () => {
+    if (selectedPriorities.length > 0) {
+      // Set the critical priority to the first selected priority
+      setCriticalPriority(selectedPriorities[0]);
+      
+      // Set loading state to true
+      setLoading(true);
+      
+      // Generate the policy
+      generatePolicy().then(() => {
+        // After policy generation, navigate to results page
+        setSection("results");
+        setLoading(false);
+      }).catch(error => {
+        console.error("Error generating policy:", error);
+        setLoading(false);
+      });
+    }
+  };
+
+  // Render the priorities section with checkboxes and submit button
+  const renderPrioritiesSection = () => {
+    return (
+      <Card className="mx-auto max-w-2xl">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="text-muted-foreground hover:text-primary"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <CardTitle>{getSectionTitle()}</CardTitle>
+            <div className="w-[70px]" /> {/* Spacer for alignment */}
+          </div>
+          <CardDescription>
+            {getCurrentQuestion()?.question}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4">
+            {getCurrentQuestion()!.options.map((option, i) => (
+              <div key={i} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`priority-${i}`}
+                  checked={selectedPriorities.includes(option)}
+                  onChange={() => handlePrioritySelection(option)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <label htmlFor={`priority-${i}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  {option}
+                </label>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            className="w-full" 
+            size="lg" 
+            onClick={handlePrioritySubmit}
+            disabled={selectedPriorities.length === 0 || loading}
+          >
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Generating Policy...
+              </div>
+            ) : (
+              "Generate Policy"
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  };
+
   return (
     <div className="relative min-h-screen">
       {/* Background gradients */}
@@ -1007,30 +1106,72 @@ ${conclusion}
           {section !== 'landing' && section !== 'results' && (
             <div className="mb-8">
               <div className="flex justify-between mb-2 text-sm">
-                <span>Location</span>
                 <span>Context</span>
                 <span>Demographics</span>
-                <span>Role</span>
-                <span>Devices</span>
-                <span>Literacy</span>
-                <span>Environment</span>
+                <span>Access</span>
+                <span>AI Literacy</span>
                 <span>Priorities</span>
               </div>
               <Progress 
                 value={(() => {
-                  const sectionValues: Record<SectionType, number> = { 
-                    landing: 0,
-                    location: 12.5, 
-                    context: 25, 
-                    demographics: 37.5, 
-                    role: 50, 
-                    devices: 62.5, 
-                    literacy: 75, 
-                    environment: 87.5, 
-                    priorities: 100, 
-                    results: 100 
+                  // Define the section order
+                  const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
+                  
+                  // Define which sections belong to which topic
+                  const topicSections: Record<string, SectionType[]> = {
+                    context: ['location', 'context'],
+                    demographics: ['demographics', 'role'],
+                    access: ['teacherDevices', 'studentDevices', 'teacherAIUsage', 'studentAIUsage'],
+                    aiLiteracy: ['staffAIliteracy', 'studentAIliteracy'],
+                    priorities: ['environment', 'priorities']
                   };
-                  return sectionValues[section];
+                  
+                  // Calculate progress based on completed topics
+                  let completedTopics = 0;
+                  const totalTopics = 5; // Context, Demographics, Access, AI Literacy, Priorities
+                  
+                  // Check if we've completed the context topic
+                  if (sectionOrder.indexOf(section) > sectionOrder.indexOf('context')) {
+                    completedTopics++;
+                  }
+                  
+                  // Check if we've completed the demographics topic
+                  if (sectionOrder.indexOf(section) > sectionOrder.indexOf('role')) {
+                    completedTopics++;
+                  }
+                  
+                  // Check if we've completed the access topic
+                  if (sectionOrder.indexOf(section) > sectionOrder.indexOf('studentAIUsage')) {
+                    completedTopics++;
+                  }
+                  
+                  // Check if we've completed the AI literacy topic
+                  if (sectionOrder.indexOf(section) > sectionOrder.indexOf('studentAIliteracy')) {
+                    completedTopics++;
+                  }
+                  
+                  // Check if we've completed the priorities topic
+                  if (sectionOrder.indexOf(section) > sectionOrder.indexOf('priorities')) {
+                    completedTopics++;
+                  }
+                  
+                  // Calculate base percentage
+                  let percentage = (completedTopics / totalTopics) * 100;
+                  
+                  // Add offset for priorities section to make the progress bar extend further
+                  if (section === 'environment' || section === 'priorities') {
+                    // Add 10% offset to make the progress bar extend further
+                    percentage += 10;
+                  }
+                  
+                  // Add offset for AI Literacy categories
+                  if (section === 'staffAIliteracy' || section === 'studentAIliteracy') {
+                    // Add 5% offset to make the progress bar extend further
+                    percentage += 5;
+                  }
+                  
+                  // Ensure percentage doesn't exceed 100%
+                  return Math.min(percentage, 100);
                 })()} 
                 className="h-2"
               />
@@ -1061,7 +1202,7 @@ ${conclusion}
           )}
 
           {/* Questions */}
-          {section !== 'landing' && section !== 'results' && (
+          {section !== 'landing' && section !== 'results' && section !== 'priorities' && (
             <Card className="mx-auto max-w-2xl">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1114,6 +1255,9 @@ ${conclusion}
               </CardContent>
             </Card>
           )}
+
+          {/* Priorities Section with Checkboxes */}
+          {section === 'priorities' && renderPrioritiesSection()}
 
           {/* Results Page */}
           {section === 'results' && (
@@ -1173,6 +1317,7 @@ ${conclusion}
                     setResponse("");
                     setEditedPolicy("");
                     setIsEditing(false);
+                    setSelectedPriorities([]);
                   }}
                 >
                   <RefreshCw className="mr-2 h-4 w-4" />

@@ -2,7 +2,7 @@ import { Brain, Shield } from "lucide-react"
 
 const features = [
   {
-    name: "AI Policy Generator",
+    name: "AI Policy Pathway",
     description: "Create comprehensive, customized AI policies for your school or district that cover implementation guidelines, privacy protection, and ethical usage standards.",
     icon: Brain,
   },

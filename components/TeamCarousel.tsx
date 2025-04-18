@@ -21,7 +21,7 @@ const teamMembers = [
     name: "Claire Schwarzhoff",
     title: "Title",
     image: "/profiles/claireschwarzhoff.jpeg",
-    bio: ""
+    bio: "Claire Schwarzhoff is a distinguished leader in AI literacy and policy implementation, with a strong foundation in computer science and machine learning. She is dedicated to advancing AI awareness and education, with a focus on promoting accessibility and fostering informed engagement across educational communities."
   },
   {
     name: "Myra Jain",

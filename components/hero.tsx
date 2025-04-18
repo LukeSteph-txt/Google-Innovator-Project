@@ -12,7 +12,7 @@ export default function Hero() {
           AI Policy Pathway
         </h1>
         <p className="mx-auto max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
-          Empowering educators with AI tools and policies for the modern classroom. From AI-driven learning to comprehensive policy frameworks, we're shaping the future of education.
+          Empowering educators with GenAI policies for the modern classroom. We're shaping the future of education through AI Policy Pathway.
         </p>
       </div>
       <div className="flex gap-4">

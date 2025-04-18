@@ -14,7 +14,7 @@ export default function AboutUs() {
             About Us
           </h2>
           <p className="text-lg text-muted-foreground">
-            Empowering educational institutions to embrace AI responsibly and effectively
+            A Google Innovator Project empowering educational institutions to embrace Gen AI responsibly and effectively
           </p>
         </div>
 
@@ -24,10 +24,10 @@ export default function AboutUs() {
           >
             <h3 className="text-2xl font-semibold">Our Mission</h3>
             <p className="text-muted-foreground leading-relaxed">
-              We are dedicated to helping educational institutions navigate the complex landscape of artificial intelligence in education. Our platform provides comprehensive tools and resources to create customized AI policies that ensure safe, ethical, and effective implementation of AI technologies in schools.
+              We are dedicated to helping educational institutions navigate the complex landscape of artificial intelligence in education. Our platform provides an editable sample policy that is designed to support school leaders and educators when navigating today's GenAI-enabled educational landscape.
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              Through our AI Policy Generator, we empower schools and districts to establish clear guidelines for AI usage, protect student privacy, and maximize the educational benefits of AI while minimizing potential risks.
+              Through our AI Policy Generator, we intend to empower schools and districts to establish clear guidelines for AI usage, protect student privacy, and maximize the educational benefits of AI while minimizing potential risks.
             </p>
           </div>
 
@@ -45,7 +45,7 @@ export default function AboutUs() {
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="text-purple-500">✦</span>
-                      <span className="text-muted-foreground">Comprehensive coverage of AI implementation guidelines</span>
+                      <span className="text-muted-foreground">Comprehensive coverage of research-based AI policy guidelines</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="text-blue-500">✦</span>
@@ -53,7 +53,7 @@ export default function AboutUs() {
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="text-purple-500">✦</span>
-                      <span className="text-muted-foreground">Support for staff training and AI literacy</span>
+                      <span className="text-muted-foreground">Expand AI literacy among educators and students</span>
                     </li>
                   </ul>
                 </div>
