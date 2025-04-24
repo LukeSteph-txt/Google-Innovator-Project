@@ -28,6 +28,12 @@ const teamMembers = [
     title: "Principal",
     image: "/profiles/kipglazer.jpg",
     bio: "Dr. Glazer is a proud principal of Mountain View High School. She is a Google Innovator interested in supporting students to work on meaningful technology projects that focus on the effective and ethical use of GenAI and AI-enabled tools."
+  },
+  {
+    name: "Myra Jain",
+    title: "Class of 2028",
+    image: "/profiles/myrajain.jpg",
+    bio: "Myra is a passionate student leader and advocate for equitable access to technology education. She is dedicated to promoting digital literacy and empowering students to make informed decisions about the responsible use of AI."
   }
 ]
 
