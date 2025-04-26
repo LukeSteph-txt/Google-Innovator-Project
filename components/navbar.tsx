@@ -31,7 +31,6 @@ export default function Navbar() {
               <span className="sr-only">LinkedIn</span>
             </Button>
           </Link>
-          <Button variant="ghost" size="sm">Contact</Button>
           <Link href="/policy-generator"><Button size="sm">Generate Now</Button></Link>
         </div>
       </div>

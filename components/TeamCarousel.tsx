@@ -6,6 +6,12 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 const teamMembers = [
   {
+    name: "Kip Glazer Ed.D.",
+    title: "Principal",
+    image: "/profiles/kipglazer.jpg",
+    bio: "Dr. Glazer is a proud principal of Mountain View High School. She is a Google Innovator interested in supporting students to work on meaningful technology projects that focus on the effective and ethical use of GenAI and AI-enabled tools."
+  },
+  {
     name: "Luke Stephenson",
     title: "Class of 2025",
     image: "/profiles/luke_stephenson_squareforweb.png",
@@ -22,12 +28,6 @@ const teamMembers = [
     title: "Class of 2026",
     image: "/profiles/claireschwarzhoff.jpeg",
     bio: "Claire Schwarzhoff is a distinguished leader in AI literacy and policy implementation, with a strong foundation in computer science and machine learning. She is dedicated to advancing AI awareness and education, with a focus on promoting accessibility and fostering informed engagement across educational communities."
-  },
-  {
-    name: "Kip Glazer",
-    title: "Principal",
-    image: "/profiles/kipglazer.jpg",
-    bio: "Dr. Glazer is a proud principal of Mountain View High School. She is a Google Innovator interested in supporting students to work on meaningful technology projects that focus on the effective and ethical use of GenAI and AI-enabled tools."
   },
   {
     name: "Myra Jain",
