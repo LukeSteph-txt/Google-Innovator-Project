@@ -6,12 +6,6 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 const teamMembers = [
   {
-    name: "Kip Glazer Ed.D.",
-    title: "Principal",
-    image: "/profiles/kipglazer.jpg",
-    bio: "Dr. Glazer is a proud principal of Mountain View High School. She is a Google Innovator interested in supporting students to work on meaningful technology projects that focus on the effective and ethical use of GenAI and AI-enabled tools."
-  },
-  {
     name: "Luke Stephenson",
     title: "Class of 2025",
     image: "/profiles/luke_stephenson_squareforweb.png",
@@ -34,6 +28,18 @@ const teamMembers = [
     title: "Class of 2028",
     image: "/profiles/myrajain.jpg",
     bio: "Myra is a passionate student leader and advocate for equitable access to technology education. She is dedicated to promoting digital literacy and empowering students to make informed decisions about the responsible use of AI."
+  },
+  {
+    name: "Dhruv Vijay",
+    title: "Class of 2026",
+    image: "/profiles/dhruvvijay.jpg",
+    bio: "Dhruv Vijay is a student passionate about artificial intelligence, educational technology, and community outreach. Dhruv is dedicated to using technology as a tool for positive change. He enjoys collaborating with others to create solutions that make learning more accessible and engaging, and is committed to empowering his community through innovative educational programs."
+  },
+  {
+    name: "Kip Glazer Ed.D.",
+    title: "Principal",
+    image: "/profiles/kipglazer.jpg",
+    bio: "Dr. Glazer is a proud principal of Mountain View High School. She is a Google Innovator interested in supporting students to work on meaningful technology projects that focus on the effective and ethical use of GenAI and AI-enabled tools."
   }
 ]
 
