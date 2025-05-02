@@ -57,7 +57,7 @@ interface RegularQuestion extends BaseQuestion {
 type Question = DropdownQuestion | SliderQuestion | RegularQuestion;
 
 // Define section type
-type SectionType = 'landing' | 'location' | 'context' | 'demographics' | 'role' | 'teacherDevices' | 'studentDevices' | 'teacherAIUsage' | 'studentAIUsage' | 'staffAIliteracy' | 'studentAIliteracy' | 'environment' | 'priorities' | 'results';
+type SectionType = 'landing' | 'location' | 'context' | 'demographics' | 'role' | 'teacherDevices' | 'teacherAccess' | 'studentDevices' | 'teacherAIUsage' | 'studentAIUsage' | 'staffAIliteracy' | 'studentAIliteracy' | 'environment' | 'priorities' | 'results';
 
 export default function PolicyGenerator() {
   // State for tracking if user has started the process
@@ -143,7 +143,7 @@ export default function PolicyGenerator() {
             case "One-to-one":
               deviceDetails.push("Comprehensive device access enables consistent AI integration across all learning activities.");
               break;
-            case "BYOD":
+            case "Bring Your Own Device (BYOD)":
               deviceDetails.push("Policy must account for varying device capabilities and ensure equitable access.");
               break;
             case "Computer Lab":
@@ -815,9 +815,11 @@ ${conclusion}
       {
         question: "What is your device policy?",
         type: 'regular',
-        options: ["One-to-one", "BYOD", "Computer Lab", "We have no comprehensive device policy"],
+        options: ["One-to-one", "Bring Your Own Device (BYOD)", "Computer Lab", "We have no comprehensive device policy"],
         setter: setDevicePolicy
-      },
+      }
+    ],
+    teacherAccess: [
       {
         question: "What percentage of your teachers would you say has a device capable of accessing GenAI regularly?",
         type: 'regular',
@@ -911,7 +913,7 @@ ${conclusion}
       setQuestionIndex(questionIndex + 1);
     } else {
       // Determine next section
-      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"]; 
+      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "teacherAccess", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
       const currentIndex = sectionOrder.indexOf(section);
       const nextSection = sectionOrder[currentIndex + 1] as SectionType;
       
@@ -931,7 +933,7 @@ ${conclusion}
       setQuestionIndex(questionIndex - 1);
     } else {
       // Go back to previous section
-      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
+      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "teacherAccess", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
       const currentIndex = sectionOrder.indexOf(section);
       const prevSection = sectionOrder[currentIndex - 1] as SectionType;
       
@@ -951,7 +953,8 @@ ${conclusion}
       context: "Policy Context",
       demographics: "Student Demographics",
       role: "Your Role",
-      teacherDevices: "Teacher Device Policy",
+      teacherDevices: "Institutional Device Policy",
+      teacherAccess: "Teacher Device Access",
       studentDevices: "Student Device Access",
       teacherAIUsage: "Teacher GenAI Usage",
       studentAIUsage: "Student GenAI Usage",
@@ -1139,7 +1142,7 @@ ${conclusion}
               <Progress 
                 value={loading ? 100 : (() => {
                   // Define the section order
-                  const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
+                  const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "teacherAccess", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
                   
                   // Define which sections belong to which topic
                   const topicSections: Record<string, SectionType[]> = {
