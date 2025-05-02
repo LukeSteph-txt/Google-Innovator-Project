@@ -1120,7 +1120,7 @@ ${conclusion}
         <Navbar />
         <div className="container max-w-5xl py-10">
           <div className="mb-8 text-center">
-            <h1 className="text-4xl font-bold tracking-tight">AI Policy Generator</h1>
+            <h1 className="text-4xl font-bold tracking-tight">AI Policy Pathway</h1>
             <p className="mt-2 text-muted-foreground">
               Create a customized AI policy for your educational institution
             </p>
