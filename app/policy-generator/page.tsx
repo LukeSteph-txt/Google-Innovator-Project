@@ -8,10 +8,12 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import ReactMarkdown from 'react-markdown';
-import { Download, RefreshCw, ArrowLeft, Edit, Save } from "lucide-react";
+import { Download, RefreshCw, ArrowLeft, Edit, Save, Upload, X } from "lucide-react";
 import Navbar from "@/components/navbar";
 import { Textarea } from "@/components/ui/textarea";
 import Footer from "@/components/footer";
+import React, { Fragment } from 'react';
+import rehypeRaw from 'rehype-raw';
 
 // List of US states for dropdown
 const usStates = [
@@ -57,7 +59,207 @@ interface RegularQuestion extends BaseQuestion {
 type Question = DropdownQuestion | SliderQuestion | RegularQuestion;
 
 // Define section type
-type SectionType = 'landing' | 'location' | 'context' | 'demographics' | 'role' | 'teacherDevices' | 'teacherAccess' | 'studentDevices' | 'teacherAIUsage' | 'studentAIUsage' | 'staffAIliteracy' | 'studentAIliteracy' | 'environment' | 'priorities' | 'results';
+type SectionType = 'landing' | 'location' | 'context' | 'demographics' | 'role' | 'teacherDevices' | 'teacherAccess' | 'studentDevices' | 'teacherAIUsage' | 'studentAIUsage' | 'staffAIliteracy' | 'studentAIliteracy' | 'environment' | 'priorities' | 'documents' | 'results';
+
+interface UploadedDocument {
+  filename: string;
+  content: string;
+}
+
+// Preprocess: Replace Follow Up tags with <followup comment="...">...</followup>
+function preprocessFollowUpTags(md: string) {
+  // Replace all {{Follow Up (question)}} ... {{/Follow Up}} with a custom <followup comment="...">...</followup> tag
+  md = md.replace(/\{\{Follow Up \((.*?)\)\}\}([\s\S]*?)\{\{\/Follow Up\}\}/g, (_match, comment, content) => {
+    const cleanContent = String(content).replace(/^\s*\.\.\./, '').replace(/\.\.\.\s*$/, '').trim();
+    const safeComment = String(comment).replace(/"/g, '&quot;');
+    return `<followup comment="${safeComment}">${cleanContent}</followup>`;
+  });
+  // Replace all {{SurveyLink (explanation|section)}} ... {{/SurveyLink}} with <surveylink explanation="..." section="...">...</surveylink>
+  md = md.replace(/\{\{SurveyLink \((.*?)\|(.*?)\)\}\}([\s\S]*?)\{\{\/SurveyLink\}\}/g, (_match, explanation, section, content) => {
+    const cleanContent = String(content).trim();
+    const safeExplanation = String(explanation).replace(/"/g, '&quot;');
+    const safeSection = String(section).replace(/"/g, '&quot;');
+    return `<surveylink explanation="${safeExplanation}" section="${safeSection}">${cleanContent}</surveylink>`;
+  });
+  // Replace all {{DocLink (filename|explanation)}} ... {{/DocLink}} with <doclink filename="..." explanation="...">...</doclink>
+  md = md.replace(/\{\{DocLink \((.*?)\|(.*?)\)\}\}([\s\S]*?)\{\{\/DocLink\}\}/g, (_match, filename, explanation, content) => {
+    const cleanContent = String(content).trim();
+    const safeFilename = String(filename).replace(/"/g, '&quot;');
+    const safeExplanation = String(explanation).replace(/"/g, '&quot;');
+    return `<doclink filename="${safeFilename}" explanation="${safeExplanation}">${cleanContent}</doclink>`;
+  });
+  return md;
+}
+
+// Custom FollowUp highlight component
+const FollowUp = ({ comment, children }: { comment: string, children: React.ReactNode }) => (
+  <span
+    style={{ background: '#a78bfa', color: '#fff', borderRadius: '4px', padding: '0.1em 0.3em', cursor: 'pointer', position: 'relative', display: 'inline' }}
+    className="followup-highlight group"
+    tabIndex={0}
+    aria-label={comment}
+  >
+    {children}
+    <span
+      style={{
+        visibility: 'hidden',
+        background: '#6d28d9',
+        color: '#fff',
+        textAlign: 'left',
+        borderRadius: '4px',
+        padding: '0.5em 1em',
+        position: 'absolute',
+        zIndex: 10,
+        left: '50%',
+        top: '100%',
+        transform: 'translateX(-50%)',
+        whiteSpace: 'pre-line',
+        minWidth: '200px',
+        marginTop: '0.5em',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        fontSize: '0.95em',
+        opacity: 0,
+        transition: 'opacity 0.2s',
+        pointerEvents: 'none',
+      }}
+      className="followup-tooltip"
+      role="tooltip"
+    >
+      {comment}
+    </span>
+    <style>{`
+      .followup-highlight:hover .followup-tooltip,
+      .followup-highlight:focus .followup-tooltip {
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+    `}</style>
+  </span>
+);
+
+// Custom highlight components
+const sectionColors: Record<string, string> = {
+  'Introduction and Rationale': '#f59e42',
+  'Permitted Use': '#38bdf8',
+  'Prohibited Use': '#ef4444',
+  'Commitment to Staff Training': '#a3e635',
+  'Privacy & Transparency': '#f472b6',
+  'Bias & Accessibility': '#facc15',
+  'Environmental Impact': '#34d399',
+  'Accountability & Enforcement': '#818cf8',
+  'Conclusion': '#fbbf24',
+};
+
+const SurveyLink = ({ explanation, section, children }: { explanation: string, section: string, children: React.ReactNode }) => (
+  <span
+    style={{
+      background: sectionColors[section] || '#ddd',
+      color: '#222',
+      borderRadius: '4px',
+      padding: '0.1em 0.3em',
+      cursor: 'pointer',
+      position: 'relative',
+      display: 'inline',
+      borderBottom: '2px dotted #555',
+    }}
+    className="surveylink-highlight group"
+    tabIndex={0}
+    aria-label={explanation}
+  >
+    {children}
+    <span
+      style={{
+        visibility: 'hidden',
+        background: '#222',
+        color: '#fff',
+        textAlign: 'left',
+        borderRadius: '4px',
+        padding: '0.5em 1em',
+        position: 'absolute',
+        zIndex: 10,
+        left: '50%',
+        top: '100%',
+        transform: 'translateX(-50%)',
+        whiteSpace: 'pre-line',
+        minWidth: '200px',
+        marginTop: '0.5em',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        fontSize: '0.95em',
+        opacity: 0,
+        transition: 'opacity 0.2s',
+        pointerEvents: 'none',
+      }}
+      className="surveylink-tooltip"
+      role="tooltip"
+    >
+      <b>Survey Link ({section}):</b> {explanation}
+    </span>
+    <style>{`
+      .surveylink-highlight:hover .surveylink-tooltip,
+      .surveylink-highlight:focus .surveylink-tooltip {
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+    `}</style>
+  </span>
+);
+
+const DocLink = ({ filename, explanation, children }: { filename: string, explanation: string, children: React.ReactNode }) => (
+  <span
+    style={{
+      background: '#6366f1',
+      color: '#fff',
+      borderRadius: '4px',
+      padding: '0.1em 0.3em',
+      cursor: 'pointer',
+      position: 'relative',
+      display: 'inline',
+      borderBottom: '2px dashed #fff',
+    }}
+    className="doclink-highlight group"
+    tabIndex={0}
+    aria-label={explanation}
+  >
+    {children}
+    <span
+      style={{
+        visibility: 'hidden',
+        background: '#222',
+        color: '#fff',
+        textAlign: 'left',
+        borderRadius: '4px',
+        padding: '0.5em 1em',
+        position: 'absolute',
+        zIndex: 10,
+        left: '50%',
+        top: '100%',
+        transform: 'translateX(-50%)',
+        whiteSpace: 'pre-line',
+        minWidth: '200px',
+        marginTop: '0.5em',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        fontSize: '0.95em',
+        opacity: 0,
+        transition: 'opacity 0.2s',
+        pointerEvents: 'none',
+      }}
+      className="doclink-tooltip"
+      role="tooltip"
+    >
+      <b>Document Link ({filename}):</b> {explanation}
+    </span>
+    <style>{`
+      .doclink-highlight:hover .doclink-tooltip,
+      .doclink-highlight:focus .doclink-tooltip {
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+    `}</style>
+  </span>
+);
 
 export default function PolicyGenerator() {
   // State for tracking if user has started the process
@@ -93,9 +295,18 @@ export default function PolicyGenerator() {
   const policyRef = useRef<HTMLDivElement>(null);
   const [loadingMessage, setLoadingMessage] = useState("");
 
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   async function generatePolicy() {
     setLoading(true);
     try {
+      // Add uploaded documents to the context
+      const uploadedDocsContext = uploadedDocuments.map(doc => 
+        `Document "${doc.filename}":\n${doc.content}`
+      ).join('\n\n');
+
       // Create a dynamic context object
       const policyContext = {
         // Location and Context Section
@@ -285,7 +496,8 @@ export default function PolicyGenerator() {
           }
   
           return priorityDetails.join(" ");
-        })()
+        })(),
+        uploadedDocumentsContext: uploadedDocsContext
       };
   
       // Function to make API calls for each section
@@ -306,6 +518,7 @@ export default function PolicyGenerator() {
           If AI literacy levels are specified, tailor the guidelines accordingly.
           If environmental awareness is provided, adjust the environmental impact section accordingly.
           If specific priorities are mentioned, emphasize those areas in the policy.
+          If uploaded documents are provided, carefully consider their content and incorporate relevant elements into the policy.
           
           ${exampleContent ? `Use the following example as a optimal reference and template for style and structure, but adapt the content to the specific parameters provided above:\n\n${exampleContent}` : ''}
         `;
@@ -351,6 +564,9 @@ export default function PolicyGenerator() {
         - Environmental Awareness: ${environmentalAwareness}
         - Critical Priority: ${criticalPriority}
         
+        UPLOADED DOCUMENTS:
+        ${uploadedDocsContext}
+        
         CONTEXTUAL INSIGHTS:
         ${policyContext.locationContext}
         ${policyContext.deviceContext}
@@ -368,6 +584,7 @@ export default function PolicyGenerator() {
         - Mention the level of AI literacy across different groups
         - Include environmental considerations based on awareness level
         - Emphasize the critical priority identified
+        - Incorporate relevant elements from any uploaded documents
         
         IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
@@ -710,6 +927,28 @@ ${conclusion}
       const proofingSystemPrompt = `
         You are an expert editor specializing in educational policy documents. Your task is to proofread, format, and refine the provided AI policy document.
         
+        IMPORTANT: Under no circumstances should the name of the school, district, or any specific institution be mentioned in the final policy document, even if it appears in uploaded documents or examples. Remove or replace any such names with generic terms like [Your School Name] or [Your District Name].
+        
+        1. Identify the three sentences in the final policy that would most benefit from user customization or review. For each, annotate the sentence using the following exact tag format:
+        {{Follow Up (Your specific question for the user about customizing this sentence)}} ...policy text... {{/Follow Up}}
+        The question in parentheses should be specific to what the user should consider or review for that sentence. Only annotate three sentences in total, and only those that are most likely to require user input or local adaptation.
+        
+        2. For any sentence or section that is directly influenced by a specific survey answer, annotate it using:
+        {{SurveyLink (explanation|section)}} ...policy text... {{/SurveyLink}}
+        Where 'explanation' is a brief note on how the survey answer affected the policy, and 'section' is the policy section name (e.g., "Commitment to Staff Training").
+        
+        3. For two sentences or sections that strongly align with the content of any uploaded document, annotate them using:
+        {{DocLink (filename|explanation)}} ...policy text... {{/DocLink}}
+        Where 'filename' is the name of the uploaded document, and 'explanation' is a brief note on how the content aligns.
+        
+        EXAMPLES:
+        - If a sentence is directly influenced by a survey answer (e.g., "Staff AI literacy is low"), annotate it like this:
+          {{SurveyLink (This section was added because you indicated staff AI literacy is low|Commitment to Staff Training)}} Staff will receive additional AI training days. {{/SurveyLink}}
+        - If a sentence strongly aligns with an uploaded document (e.g., "MissionStatement.txt" says "equity is a core value"), annotate it like this:
+          {{DocLink (MissionStatement.txt|This sentence reflects the core value of equity from your mission statement)}} The policy prioritizes equity in AI access. {{/DocLink}}
+        
+        You must include at least two SurveyLink and two DocLink annotations if possible, in addition to the three Follow Up tags.
+        
         Please:
         1. Ensure consistent formatting throughout the document
         2. Remove any text that appears to be from the AI model itself (like "Here's the section on..." or "I've generated...")
@@ -890,6 +1129,7 @@ ${conclusion}
         setter: setCriticalPriority
       }
     ],
+    documents: [],
     results: []
   };
 
@@ -913,16 +1153,13 @@ ${conclusion}
       setQuestionIndex(questionIndex + 1);
     } else {
       // Determine next section
-      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "teacherAccess", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
+      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "teacherAccess", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "documents", "results"];
       const currentIndex = sectionOrder.indexOf(section);
       const nextSection = sectionOrder[currentIndex + 1] as SectionType;
       
       if (nextSection) {
         setSection(nextSection);
         setQuestionIndex(0);
-        
-        // Don't automatically generate policy when reaching results
-        // The user will need to click the submit button
       }
     }
   };
@@ -933,7 +1170,7 @@ ${conclusion}
       setQuestionIndex(questionIndex - 1);
     } else {
       // Go back to previous section
-      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "teacherAccess", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
+      const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "teacherAccess", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "documents", "results"];
       const currentIndex = sectionOrder.indexOf(section);
       const prevSection = sectionOrder[currentIndex - 1] as SectionType;
       
@@ -962,6 +1199,7 @@ ${conclusion}
       studentAIliteracy: "Student GenAI Literacy Level",
       environment: "Environmental Impact",
       priorities: "Policy Priorities",
+      documents: "Upload Supporting Documents",
       results: "Your AI Policy"
     };
     return titles[section];
@@ -1011,19 +1249,26 @@ ${conclusion}
       // Set the critical priority to the first selected priority
       setCriticalPriority(selectedPriorities[0]);
       
-      // Set loading state to true
-      setLoading(true);
-      
-      // Generate the policy
-      generatePolicy().then(() => {
-        // After policy generation, navigate to results page
-        setSection("results");
-        setLoading(false);
-      }).catch(error => {
-        console.error("Error generating policy:", error);
-        setLoading(false);
-      });
+      // Move to documents section instead of generating policy
+      setSection("documents");
+      setQuestionIndex(0);
     }
+  };
+
+  // Function to handle document submission and policy generation
+  const handleDocumentSubmit = () => {
+    // Set loading state to true
+    setLoading(true);
+    
+    // Generate the policy
+    generatePolicy().then(() => {
+      // After policy generation, navigate to results page
+      setSection("results");
+      setLoading(false);
+    }).catch(error => {
+      console.error("Error generating policy:", error);
+      setLoading(false);
+    });
   };
 
   // Effect for rotating loading messages
@@ -1110,6 +1355,204 @@ ${conclusion}
     );
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      let textContent: string;
+      let fileName = file.name;
+
+      if (file.type === 'application/pdf') {
+        // Only run in the browser
+        if (typeof window !== 'undefined') {
+          // Load PDF.js from CDN if not already loaded
+          // @ts-ignore
+          if (!window.pdfjsLib) {
+            await new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+              script.onload = resolve;
+              script.onerror = reject;
+              document.body.appendChild(script);
+            });
+          }
+          // @ts-ignore
+          const pdfjsLib = window.pdfjsLib;
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          let text = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const strings = content.items.map((item: any) => item.str);
+            text += strings.join(' ') + '\n';
+          }
+          textContent = text;
+          fileName = fileName.replace(/\.pdf$/i, '.txt');
+        } else {
+          throw new Error('PDF parsing is only supported in the browser.');
+        }
+      } else if (file.type === 'text/plain') {
+        textContent = await file.text();
+      } else {
+        throw new Error('Unsupported file type. Please upload a PDF or text file.');
+      }
+
+      // Create a new text file from the content
+      const textFile = new File([textContent], fileName, { type: 'text/plain' });
+      
+      // Upload the text file
+      const formData = new FormData();
+      formData.append('file', textFile);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to upload file');
+        } else {
+          throw new Error('Server returned non-JSON response');
+        }
+      }
+
+      const data = await response.json();
+      setUploadedDocuments(prev => [...prev, {
+        filename: fileName,
+        content: data.content
+      }]);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      if (error instanceof Error) {
+        alert(error.message);
+      } else if (typeof error === 'object' && error !== null) {
+        alert(JSON.stringify(error));
+      } else {
+        alert('Failed to upload file: ' + String(error));
+      }
+    } finally {
+      setIsUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  const removeDocument = (filename: string) => {
+    setUploadedDocuments(uploadedDocuments.filter(doc => doc.filename !== filename));
+  };
+
+  const renderFileUpload = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-center w-full">
+        <label
+          htmlFor="file-upload"
+          className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+        >
+          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+            <Upload className="w-8 h-8 mb-4 text-gray-500" />
+            <p className="mb-2 text-sm text-gray-500">
+              <span className="font-semibold">Click to upload</span> or drag and drop
+            </p>
+            <p className="text-xs text-gray-500">PDF or TXT files</p>
+          </div>
+          <input
+            id="file-upload"
+            type="file"
+            className="hidden"
+            accept=".pdf,.txt"
+            onChange={handleFileUpload}
+            disabled={isUploading}
+          />
+        </label>
+      </div>
+      {uploadedDocuments.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Uploaded Documents:</h3>
+          <ul className="space-y-2">
+            {uploadedDocuments.map((doc) => (
+              <li
+                key={doc.filename}
+                className="flex items-center justify-between p-2 bg-gray-50 rounded"
+              >
+                <span className="text-sm truncate">{doc.filename}</span>
+                <button
+                  onClick={() => removeDocument(doc.filename)}
+                  className="p-1 hover:bg-gray-200 rounded"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+
+  // Render the document upload section
+  const renderDocumentsSection = () => {
+    return (
+      <Card className="mx-auto max-w-2xl">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="text-muted-foreground hover:text-primary"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <CardTitle>{getSectionTitle()}</CardTitle>
+            <div className="w-[70px]" /> {/* Spacer for alignment */}
+          </div>
+          <CardDescription>
+            Upload any existing documents that you'd like to be considered when generating your policy. This step is optional but can help create a more tailored policy.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              You can upload documents such as:
+            </div>
+            <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
+              <li>Existing school policies</li>
+              <li>School mission statements</li>
+              <li>Technology guidelines</li>
+              <li>Any other relevant documents</li>
+            </ul>
+            {renderFileUpload()}
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            className="w-full" 
+            size="lg" 
+            onClick={handleDocumentSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Generating Policy...
+              </div>
+            ) : (
+              "Generate Policy"
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  };
+
   return (
     <div className="relative min-h-screen">
       {/* Background gradients */}
@@ -1138,11 +1581,12 @@ ${conclusion}
                 <span>Access</span>
                 <span>AI Literacy</span>
                 <span>Priorities</span>
+                <span>Documents</span>
               </div>
               <Progress 
                 value={loading ? 100 : (() => {
                   // Define the section order
-                  const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "teacherAccess", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "results"];
+                  const sectionOrder: SectionType[] = ["landing", "location", "context", "demographics", "role", "teacherDevices", "teacherAccess", "studentDevices", "teacherAIUsage", "studentAIUsage", "staffAIliteracy", "studentAIliteracy", "environment", "priorities", "documents", "results"];
                   
                   // Define which sections belong to which topic
                   const topicSections: Record<string, SectionType[]> = {
@@ -1150,12 +1594,13 @@ ${conclusion}
                     demographics: ['demographics', 'role'],
                     access: ['teacherDevices', 'studentDevices', 'teacherAIUsage', 'studentAIUsage'],
                     aiLiteracy: ['staffAIliteracy', 'studentAIliteracy'],
-                    priorities: ['environment', 'priorities']
+                    priorities: ['environment', 'priorities'],
+                    documents: ['documents']
                   };
                   
                   // Calculate progress based on completed topics
                   let completedTopics = 0;
-                  const totalTopics = 5; // Context, Demographics, Access, AI Literacy, Priorities
+                  const totalTopics = 6; // Context, Demographics, Access, AI Literacy, Priorities, Documents
                   
                   // Check if we've completed the context topic
                   if (sectionOrder.indexOf(section) > sectionOrder.indexOf('context')) {
@@ -1179,6 +1624,11 @@ ${conclusion}
                   
                   // Check if we've completed the priorities topic
                   if (sectionOrder.indexOf(section) > sectionOrder.indexOf('priorities')) {
+                    completedTopics++;
+                  }
+                  
+                  // Check if we've completed the documents topic
+                  if (sectionOrder.indexOf(section) > sectionOrder.indexOf('documents')) {
                     completedTopics++;
                   }
                   
@@ -1216,6 +1666,8 @@ ${conclusion}
                   a tailored policy outline.
                 </CardDescription>
               </CardHeader>
+              <CardContent>
+              </CardContent>
               <CardFooter>
                 <Button 
                   className="w-full" 
@@ -1229,7 +1681,7 @@ ${conclusion}
           )}
 
           {/* Questions */}
-          {section !== 'landing' && section !== 'results' && section !== 'priorities' && (
+          {section !== 'landing' && section !== 'results' && section !== 'priorities' && section !== 'documents' && (
             <Card className="mx-auto max-w-2xl">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1286,6 +1738,9 @@ ${conclusion}
           {/* Priorities Section with Checkboxes */}
           {section === 'priorities' && renderPrioritiesSection()}
 
+          {/* Documents Section */}
+          {section === 'documents' && renderDocumentsSection()}
+
           {/* Results Page */}
           {section === 'results' && (
             <Card className="mx-auto max-w-4xl">
@@ -1304,33 +1759,35 @@ ${conclusion}
                   </div>
                 ) : (
                   <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert" ref={policyRef}>
-                    <div className="pdf-container">
-                      {isEditing ? (
-                        <Textarea
-                          value={editedPolicy}
-                          onChange={handlePolicyChange}
-                          className="min-h-[500px] font-mono text-sm"
-                          placeholder="Edit your policy here..."
-                        />
-                      ) : (
-                        <ReactMarkdown
-                          components={{
-                            h1: ({node, ...props}) => <h1 className="text-3xl font-bold mb-6" {...props} />,
-                            h2: ({node, ...props}) => <h2 className="text-2xl font-bold mt-8 mb-4" {...props} />,
-                            h3: ({node, ...props}) => <h3 className="text-xl font-bold mt-6 mb-3" {...props} />,
-                            p: ({node, ...props}) => <p className="my-4 leading-relaxed" {...props} />,
-                            ul: ({node, ...props}) => <ul className="list-disc pl-6 my-4 space-y-2" {...props} />,
-                            ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-4 space-y-2" {...props} />,
-                            li: ({node, ...props}) => <li className="my-1" {...props} />,
-                            strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
-                            em: ({node, ...props}) => <em className="italic" {...props} />,
-                            hr: () => null // Remove any horizontal rules
-                          }}
-                        >
-                          {response}
-                        </ReactMarkdown>
-                      )}
-                    </div>
+                    {isEditing ? (
+                      <Textarea
+                        value={editedPolicy}
+                        onChange={handlePolicyChange}
+                        className="min-h-[500px] font-mono text-sm"
+                        placeholder="Edit your policy here..."
+                      />
+                    ) : (
+                      <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{
+                        ...( {
+                          followup({ node, children, ...props }: any) {
+                            const comment = node.properties?.comment || '';
+                            return <FollowUp comment={comment}>{children}</FollowUp>;
+                          },
+                          surveylink({ node, children, ...props }: any) {
+                            const explanation = node.properties?.explanation || '';
+                            const section = node.properties?.section || '';
+                            return <SurveyLink explanation={explanation} section={section}>{children}</SurveyLink>;
+                          },
+                          doclink({ node, children, ...props }: any) {
+                            const filename = node.properties?.filename || '';
+                            const explanation = node.properties?.explanation || '';
+                            return <DocLink filename={filename} explanation={explanation}>{children}</DocLink>;
+                          },
+                        } as any )
+                      }}>
+                        {preprocessFollowUpTags(response)}
+                      </ReactMarkdown>
+                    )}
                   </div>
                 )}
               </CardContent>
