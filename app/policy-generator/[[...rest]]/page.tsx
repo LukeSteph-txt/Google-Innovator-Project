@@ -17,6 +17,7 @@ import rehypeRaw from 'rehype-raw';
 import { ComposableMap, Geographies, Geography, ZoomableGroup, Annotation } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
 import { toast } from "sonner";
+import { useAuth, useClerk } from "@clerk/nextjs";
 
 // List of US states for dropdown
 const usStates = [
@@ -632,6 +633,10 @@ const DocLink = ({ filename, explanation, children }: { filename: string, explan
 );
 
 export default function PolicyGenerator() {
+  // Authentication state
+  const { isLoaded, isSignedIn } = useAuth();
+  const { openSignIn, openSignUp } = useClerk();
+  
   // State for tracking if user has started the process
   const [started, setStarted] = useState(false);
   
@@ -2023,6 +2028,73 @@ ${conclusion}
       </Card>
     );
   };
+
+  // Show loading state while Clerk is initializing
+  if (!isLoaded) {
+    return (
+      <div className="relative min-h-screen">
+        <div className="pointer-events-none fixed inset-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
+          <div className="absolute right-0 top-0 h-[500px] w-[500px] bg-blue-500/10 blur-[100px]" />
+          <div className="absolute bottom-0 left-0 h-[500px] w-[500px] bg-purple-500/10 blur-[100px]" />
+        </div>
+        <div className="relative z-10">
+          <Navbar />
+          <div className="container max-w-5xl py-10">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-primary"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show sign-in page if user is not authenticated
+  if (!isSignedIn) {
+    return (
+      <div className="relative min-h-screen">
+        <div className="pointer-events-none fixed inset-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
+          <div className="absolute right-0 top-0 h-[500px] w-[500px] bg-blue-500/10 blur-[100px]" />
+          <div className="absolute bottom-0 left-0 h-[500px] w-[500px] bg-purple-500/10 blur-[100px]" />
+        </div>
+        <div className="relative z-10">
+          <Navbar />
+          <div className="container max-w-5xl py-10">
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="text-center space-y-8">
+                <div className="space-y-4">
+                  <h1 className="text-4xl font-bold tracking-tight">AI Policy Pathway</h1>
+                  <p className="text-xl text-muted-foreground max-w-md mx-auto">
+                    Create a customized AI policy for your educational institution
+                  </p>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <Button 
+                    size="lg" 
+                    className="w-48 h-12 text-lg"
+                    onClick={() => openSignIn({ redirectUrl: "/policy-generator" })}
+                  >
+                    Sign In
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="w-48 h-12 text-lg"
+                    onClick={() => openSignUp({ redirectUrl: "/policy-generator" })}
+                  >
+                    Create Account
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen">
