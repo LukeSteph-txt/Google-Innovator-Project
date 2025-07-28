@@ -14,6 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import Footer from "@/components/footer";
 import React, { Fragment } from 'react';
 import rehypeRaw from 'rehype-raw';
+import { ComposableMap, Geographies, Geography, ZoomableGroup, Annotation } from "react-simple-maps";
+import { geoCentroid } from "d3-geo";
+import { toast } from "sonner";
 
 // List of US states for dropdown
 const usStates = [
@@ -24,8 +27,375 @@ const usStates = [
   "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", 
   "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", 
   "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", 
-  "Wisconsin", "Wyoming", "District of Columbia"
+  "Wisconsin", "Wyoming"
 ];
+
+// Color-coded state arrays (currently includes all states, can be customized later)
+const greenStates = [
+  "California", "Oregon", "Washington", "Colorado", "Vermont", "Maine", "New Hampshire", 
+  "Massachusetts", "Connecticut", "Rhode Island", "New York", "New Jersey", "Delaware", 
+  "Maryland", "Virginia", "North Carolina", "South Carolina", "Georgia", "Florida"
+];
+
+const yellowStates = [
+  "Alaska", "Hawaii", "Arizona", "New Mexico", "Texas", "Louisiana", "Mississippi", 
+  "Alabama", "Tennessee", "Kentucky", "West Virginia", "Ohio", "Indiana", "Illinois", 
+  "Wisconsin", "Michigan", "Minnesota", "Iowa", "Missouri", "Arkansas", "Oklahoma", 
+  "Kansas", "Nebraska", "South Dakota", "North Dakota", "Montana", "Idaho", "Utah", 
+  "Nevada", "Wyoming"
+];
+
+const redStates = [
+  "Pennsylvania", "New York", "New Jersey", "Delaware", "Maryland", "Virginia", 
+  "North Carolina", "South Carolina", "Georgia", "Florida", "Alabama", "Mississippi", 
+  "Louisiana", "Texas", "Oklahoma", "Arkansas", "Missouri", "Kansas", "Nebraska", 
+  "Iowa", "Minnesota", "Wisconsin", "Illinois", "Indiana", "Ohio", "Kentucky", 
+  "Tennessee", "West Virginia", "Pennsylvania"
+];
+
+// State abbreviations for display
+const stateAbbreviations: Record<string, string> = {
+  "Alabama": "AL",
+  "Alaska": "AK",
+  "Arizona": "AZ",
+  "Arkansas": "AR",
+  "California": "CA",
+  "Colorado": "CO",
+  "Connecticut": "CT",
+  "Delaware": "DE",
+  "Florida": "FL",
+  "Georgia": "GA",
+  "Hawaii": "HI",
+  "Idaho": "ID",
+  "Illinois": "IL",
+  "Indiana": "IN",
+  "Iowa": "IA",
+  "Kansas": "KS",
+  "Kentucky": "KY",
+  "Louisiana": "LA",
+  "Maine": "ME",
+  "Maryland": "MD",
+  "Massachusetts": "MA",
+  "Michigan": "MI",
+  "Minnesota": "MN",
+  "Mississippi": "MS",
+  "Missouri": "MO",
+  "Montana": "MT",
+  "Nebraska": "NE",
+  "Nevada": "NV",
+  "New Hampshire": "NH",
+  "New Jersey": "NJ",
+  "New Mexico": "NM",
+  "New York": "NY",
+  "North Carolina": "NC",
+  "North Dakota": "ND",
+  "Ohio": "OH",
+  "Oklahoma": "OK",
+  "Oregon": "OR",
+  "Pennsylvania": "PA",
+  "Rhode Island": "RI",
+  "South Carolina": "SC",
+  "South Dakota": "SD",
+  "Tennessee": "TN",
+  "Texas": "TX",
+  "Utah": "UT",
+  "Vermont": "VT",
+  "Virginia": "VA",
+  "Washington": "WA",
+  "West Virginia": "WV",
+  "Wisconsin": "WI",
+  "Wyoming": "WY"
+};
+
+
+
+// US Map component using react-simple-maps
+const USMap = ({ onStateSelect, selectedState }: { onStateSelect: (stateName: string) => void, selectedState: string }) => {
+  // State name mapping to handle any discrepancies
+    const stateNameMap: Record<string, string> = {
+    "Alabama": "Alabama",
+    "Alaska": "Alaska",
+    "Arizona": "Arizona",
+    "Arkansas": "Arkansas",
+    "California": "California",
+    "Colorado": "Colorado",
+    "Connecticut": "Connecticut",
+    "Delaware": "Delaware",
+    "Florida": "Florida",
+    "Georgia": "Georgia",
+    "Hawaii": "Hawaii",
+    "Idaho": "Idaho",
+    "Illinois": "Illinois",
+    "Indiana": "Indiana",
+    "Iowa": "Iowa",
+    "Kansas": "Kansas",
+    "Kentucky": "Kentucky",
+    "Louisiana": "Louisiana",
+    "Maine": "Maine",
+    "Maryland": "Maryland",
+    "Massachusetts": "Massachusetts",
+    "Michigan": "Michigan",
+    "Minnesota": "Minnesota",
+    "Mississippi": "Mississippi",
+    "Missouri": "Missouri",
+    "Montana": "Montana",
+    "Nebraska": "Nebraska",
+    "Nevada": "Nevada",
+    "New Hampshire": "New Hampshire",
+    "New Jersey": "New Jersey",
+    "New Mexico": "New Mexico",
+    "New York": "New York",
+    "North Carolina": "North Carolina",
+    "North Dakota": "North Dakota",
+    "Ohio": "Ohio",
+    "Oklahoma": "Oklahoma",
+    "Oregon": "Oregon",
+    "Pennsylvania": "Pennsylvania",
+    "Rhode Island": "Rhode Island",
+    "South Carolina": "South Carolina",
+    "South Dakota": "South Dakota",
+    "Tennessee": "Tennessee",
+    "Texas": "Texas",
+    "Utah": "Utah",
+    "Vermont": "Vermont",
+    "Virginia": "Virginia",
+    "Washington": "Washington",
+    "West Virginia": "West Virginia",
+    "Wisconsin": "Wisconsin",
+    "Wyoming": "Wyoming"
+  };
+
+  // Manual adjustments for individual state label positions
+  const stateLabelOffsets: Record<string, { dx: number; dy: number }> = {
+    "California": { dx: -5, dy: 0 }, // Shift right by 5 pixels
+    "Louisiana": { dx: -5, dy: 0 }, // Shift left by 5 pixels
+    "Tennessee": { dx: 0, dy: 5 }, // Shift down by 5 pixels
+    "Kentucky": { dx: 0, dy: 5 }, // Shift down by 5 pixels
+    "Washington": { dx: 0, dy: 5 }, // Shift down by 5 pixels
+    "Florida": { dx: 5, dy: 0 }, // Shift down by 5 pixels
+  };
+
+  // Function to get state color based on category with shading
+  const getStateColor = (stateName: string, isSelected: boolean, isHover: boolean = false, isPressed: boolean = false) => {
+    // Determine base color category
+    let baseColor = "#f8fafc"; // Default light gray
+    
+    if (greenStates.includes(stateName)) {
+      if (isSelected) {
+        return "#16a34a"; // Darker green for selected
+      } else if (isPressed || isHover) {
+        return "#15803d"; // Darkest green for pressed/hover
+      } else {
+        return "#22c55e"; // Medium green for default (changed from light)
+      }
+    } else if (yellowStates.includes(stateName)) {
+      if (isSelected) {
+        return "#ca8a04"; // Darker yellow for selected
+      } else if (isPressed || isHover) {
+        return "#a16207"; // Darkest yellow for pressed/hover
+      } else {
+        return "#eab308"; // Medium yellow for default (changed from light)
+      }
+      } else if (redStates.includes(stateName)) {
+        if (isSelected) {
+          return "#dc2626"; // Darker red for selected
+        } else if (isPressed || isHover) {
+          return "#b91c1c"; // Darkest red for pressed/hover
+        } else {
+          return "#ef4444"; // Medium red for default (changed from light)
+        }
+    }
+    
+    // Default gray states (if any)
+    if (isSelected) {
+      return "#3b82f6"; // Blue for selected
+    } else if (isPressed || isHover) {
+      return "#1d4ed8"; // Darker blue for pressed/hover
+    }
+    
+    return baseColor;
+  };
+
+  return (
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="relative bg-white rounded-lg border border-gray-300 p-4" style={{ height: "400px", overflow: "hidden" }}>
+        <ComposableMap
+          projection="geoAlbersUsa"
+          projectionConfig={{
+            scale: 1200, // Increased by 25% from 960
+            center: [0, 0]
+          }}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <Geographies geography="https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json">
+            {({ geographies }: { geographies: any[] }) => (
+              <>
+                {geographies.map((geo: any) => {
+                const stateName = geo.properties.name;
+                const mappedStateName = stateNameMap[stateName] || stateName;
+                const isSelected = selectedState === mappedStateName;
+                
+                return (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    onClick={() => onStateSelect(mappedStateName)}
+                    style={{
+                      default: {
+                        fill: getStateColor(mappedStateName, isSelected),
+                        stroke: "#cbd5e1",
+                        strokeWidth: 0.8,
+                        outline: "none",
+                        cursor: "pointer",
+                      },
+                      hover: {
+                        fill: getStateColor(mappedStateName, isSelected, true),
+                        stroke: "#64748b",
+                        strokeWidth: 1,
+                        outline: "none",
+                        cursor: "pointer",
+                      },
+                      pressed: {
+                        fill: getStateColor(mappedStateName, isSelected, false, true),
+                        stroke: "#475569",
+                        strokeWidth: 1,
+                        outline: "none",
+                        cursor: "pointer",
+                      },
+                    }}
+                  />
+                );
+                })}
+                
+                {/* State labels using Annotation component */}
+                {geographies.map((geo: any) => {
+                  const stateName = geo.properties.name;
+                  const mappedStateName = stateNameMap[stateName] || stateName;
+                  const abbreviation = stateAbbreviations[mappedStateName];
+                  
+                  if (!abbreviation) return null;
+                  
+                  // Get the centroid of the state for label positioning
+                  const centroid = geoCentroid(geo);
+                  
+                  // Define smaller states that need external labels
+                  const smallStates = [
+                    "Rhode Island", "Delaware", "Connecticut", "New Jersey", 
+                    "Massachusetts", "Maryland", "New Hampshire", "Vermont"
+                  ];
+                  
+                  const isSmallState = smallStates.includes(mappedStateName);
+                  
+                                   // Calculate offset for external labels
+                 let dx = 0;
+                 let dy = 0;
+                 let connectorProps = {};
+
+                 // Apply manual adjustments for specific states
+                 const manualOffset = stateLabelOffsets[mappedStateName];
+                 if (manualOffset) {
+                   dx += manualOffset.dx;
+                   dy += manualOffset.dy;
+                 }
+
+                 if (isSmallState) {
+                   // Position labels outside the state with connecting lines (scaled up 25% more for larger map)
+                   if (mappedStateName === "Rhode Island") {
+                     // Bottom-right, 35 degrees down - moved further out
+                     dx += 39; // Scaled up 25% from 31
+                     dy += 28; // Scaled up 25% from 22
+                   } else if (mappedStateName === "Delaware") {
+                     // Right, angle up by 10% - moved further out
+                     dx += 39; // Scaled up 25% from 31
+                     dy += 6; // Scaled up 25% from 5
+                   } else if (mappedStateName === "Connecticut") {
+                     // Bottom-right, 20% shorter arrow - swapped with NJ
+                     dx += 25; // Scaled up 25% from 20
+                     dy += 28; // Scaled up 25% from 22
+                   } else if (mappedStateName === "New Jersey") {
+                     // Right, angle down 15-20% and size up 10% - swapped with CT
+                     dx += 39; // Scaled up 25% from 31
+                     dy += 13; // Scaled up 25% from 10
+                   } else if (mappedStateName === "Massachusetts") {
+                     // Right, slightly up - moved further out
+                     dx += 46; // Scaled up 25% from 37
+                     dy += -15; // Scaled up 25% from -12
+                   } else if (mappedStateName === "Maryland") {
+                     // Right, 30 degrees down - size up 15%
+                     dx += 45; // Scaled up 25% from 36
+                     dy += 24; // Scaled up 25% from 19
+                   } else if (mappedStateName === "New Hampshire") {
+                     // Top-left to avoid Maine - angle up 20%
+                     dx += -24; // Scaled up 25% from -19
+                     dy += -43; // Scaled up 25% from -34
+                   } else if (mappedStateName === "Vermont") {
+                     // Top-left to avoid Maine - angle down 10%
+                     dx += -35; // Scaled up 25% from -28
+                     dy += -24; // Scaled up 25% from -19
+                   }
+
+                   // Add connecting line properties
+                   connectorProps = {
+                     stroke: "#374151",
+                     strokeWidth: 2, // Doubled from 1
+                     strokeLinecap: "round"
+                   };
+                 }
+                  
+                  return (
+                    <Annotation
+                      key={`label-${geo.rsmKey}`}
+                      subject={centroid}
+                      dx={dx}
+                      dy={dy}
+                      connectorProps={connectorProps}
+                    >
+                      <text
+                        textAnchor="middle"
+                                               style={{
+                         fontSize: "21px", // Increased by 30% from 16px
+                         fontWeight: "bold",
+                         fill: "#374151",
+                         pointerEvents: "none",
+                         textShadow: "0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white",
+                       }}
+                      >
+                        {abbreviation}
+                      </text>
+                    </Annotation>
+                  );
+                })}
+
+
+              </>
+            )}
+          </Geographies>
+        </ComposableMap>
+        
+
+      </div>
+      
+      {/* Legend */}
+      <div className="mt-4 text-center text-sm text-gray-600">
+        <p>Click on any state to select it. Selected state will be highlighted in its category color.</p>
+        <div className="flex justify-center items-center gap-4 mt-2 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-green-500 border border-gray-300"></div>
+            <span>Green States</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-yellow-500 border border-gray-300"></div>
+            <span>Yellow States</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-red-500 border border-gray-300"></div>
+            <span>Red States</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Define question types
 interface BaseQuestion {
@@ -1553,6 +1923,107 @@ ${conclusion}
     );
   };
 
+  // Render the location section with map
+  const renderLocationSection = () => {
+    const handleContinue = () => {
+      if (!state) {
+        toast.error("Please select a state before continuing.");
+        return;
+      }
+      // Move to next section
+      setSection('context');
+    };
+
+    return (
+      <Card className="mx-auto max-w-4xl">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="text-muted-foreground hover:text-primary"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <CardTitle>{getSectionTitle()}</CardTitle>
+            <div className="w-[70px]" /> {/* Spacer for alignment */}
+          </div>
+          <CardDescription>
+            {getCurrentQuestion()?.question}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Color Key */}
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <h3 className="text-sm font-semibold mb-3 text-gray-700">State AI Policy Status:</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-4 bg-green-500 rounded border border-gray-300"></div>
+                  <span className="text-sm text-gray-600">Green: Specific AI requirements & bans for K-12</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-4 bg-yellow-500 rounded border border-gray-300"></div>
+                  <span className="text-sm text-gray-600">Yellow: Some AI guidance, no requirements</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-4 bg-red-500 rounded border border-gray-300"></div>
+                  <span className="text-sm text-gray-600">Red: No AI guidance or requirements</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Dropdown */}
+            <div className="max-w-md">
+              <label className="text-sm font-medium mb-2 block">Select from dropdown:</label>
+              <Select onValueChange={(value) => setState(value)} value={state}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getCurrentQuestion()!.options.map((option, i) => (
+                    <SelectItem key={i} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Continue Button */}
+            <div className="flex justify-center">
+              <Button 
+                onClick={handleContinue}
+                disabled={!state}
+                className="px-8 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                Continue
+              </Button>
+            </div>
+            
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or click on the map below</span>
+              </div>
+            </div>
+            
+            {/* US Map */}
+            <div className="mt-4">
+              <USMap 
+                onStateSelect={(stateName) => setState(stateName)} 
+                selectedState={state} 
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="relative min-h-screen">
       {/* Background gradients */}
@@ -1680,8 +2151,10 @@ ${conclusion}
             </Card>
           )}
 
+
+
           {/* Questions */}
-          {section !== 'landing' && section !== 'results' && section !== 'priorities' && section !== 'documents' && (
+          {section !== 'landing' && section !== 'results' && section !== 'priorities' && section !== 'documents' && section !== 'location' && (
             <Card className="mx-auto max-w-2xl">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1734,6 +2207,9 @@ ${conclusion}
               </CardContent>
             </Card>
           )}
+
+          {/* Location Section with Map */}
+          {section === 'location' && renderLocationSection()}
 
           {/* Priorities Section with Checkboxes */}
           {section === 'priorities' && renderPrioritiesSection()}
