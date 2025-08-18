@@ -32,27 +32,41 @@ const usStates = [
 ];
 
 // Color-coded state arrays (currently includes all states, can be customized later)
-const greenStates = [
-  "California", "Oregon", "Washington", "Colorado", "Vermont", "Maine", "New Hampshire", 
-  "Massachusetts", "Connecticut", "Rhode Island", "New York", "New Jersey", "Delaware", 
-  "Maryland", "Virginia", "North Carolina", "South Carolina", "Georgia", "Florida"
-];
+// const greenStates = [
+//   "California", "Oregon", "Washington", "Colorado", "Vermont", "Maine", "New Hampshire", 
+//   "Massachusetts", "Connecticut", "Rhode Island", "New York", "New Jersey", "Delaware", 
+//   "Maryland", "Virginia", "North Carolina", "South Carolina", "Georgia", "Florida"
+// ];
 
+const greenStates = ["Alabama", "Florida", "Georgia", "Hawaii"];
 const yellowStates = [
-  "Alaska", "Hawaii", "Arizona", "New Mexico", "Texas", "Louisiana", "Mississippi", 
-  "Alabama", "Tennessee", "Kentucky", "West Virginia", "Ohio", "Indiana", "Illinois", 
-  "Wisconsin", "Michigan", "Minnesota", "Iowa", "Missouri", "Arkansas", "Oklahoma", 
-  "Kansas", "Nebraska", "South Dakota", "North Dakota", "Montana", "Idaho", "Utah", 
-  "Nevada", "Wyoming"
+  "California", "Colorado", "Connecticut", "Delaware", "Indiana", "Kentucky", "Louisiana",
+  "Maine", "Minnesota", "Mississippi", "Missouri", "Nevada", "New Mexico", "North Carolina",
+  "North Dakota", "Ohio", "Oklahoma", "Oregon", "Utah", "Virginia", "Washington",
+  "West Virginia", "Wisconsin", "Wyoming"
 ];
-
 const redStates = [
-  "Pennsylvania", "New York", "New Jersey", "Delaware", "Maryland", "Virginia", 
-  "North Carolina", "South Carolina", "Georgia", "Florida", "Alabama", "Mississippi", 
-  "Louisiana", "Texas", "Oklahoma", "Arkansas", "Missouri", "Kansas", "Nebraska", 
-  "Iowa", "Minnesota", "Wisconsin", "Illinois", "Indiana", "Ohio", "Kentucky", 
-  "Tennessee", "West Virginia", "Pennsylvania"
+  // All states not in greenStates or yellowStates
+  "Alaska", "Arizona", "Arkansas", "Idaho", "Illinois", "Iowa", "Kansas", "Maryland",
+  "Massachusetts", "Michigan", "Montana", "Nebraska", "New Hampshire", "New Jersey",
+  "New York", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee",
+  "Texas", "Vermont"
 ];
+// const yellowStates = [
+//   "Alaska", "Hawaii", "Arizona", "New Mexico", "Texas", "Louisiana", "Mississippi", 
+//   "Alabama", "Tennessee", "Kentucky", "West Virginia", "Ohio", "Indiana", "Illinois", 
+//   "Wisconsin", "Michigan", "Minnesota", "Iowa", "Missouri", "Arkansas", "Oklahoma", 
+//   "Kansas", "Nebraska", "South Dakota", "North Dakota", "Montana", "Idaho", "Utah", 
+//   "Nevada", "Wyoming"
+// ];
+
+// const redStates = [
+//   "Pennsylvania", "New York", "New Jersey", "Delaware", "Maryland", "Virginia", 
+//   "North Carolina", "South Carolina", "Georgia", "Florida", "Alabama", "Mississippi", 
+//   "Louisiana", "Texas", "Oklahoma", "Arkansas", "Missouri", "Kansas", "Nebraska", 
+//   "Iowa", "Minnesota", "Wisconsin", "Illinois", "Indiana", "Ohio", "Kentucky", 
+//   "Tennessee", "West Virginia", "Pennsylvania"
+// ];
 
 // State abbreviations for display
 const stateAbbreviations: Record<string, string> = {
@@ -673,6 +687,8 @@ export default function PolicyGenerator() {
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [quota, setQuota] = useState<{used: number; remaining: number; limit: number} | null>(null);
+  const [quotaError, setQuotaError] = useState<boolean>(false);
 
   async function generatePolicy() {
     setLoading(true);
@@ -1356,7 +1372,8 @@ ${conclusion}
         body: JSON.stringify({ 
           model: "gpt-4.1",
           systemPrompt: proofingSystemPrompt, 
-          prompt: combinedPolicy 
+          prompt: combinedPolicy,
+          isFinal: true
         }),
       });
       
@@ -1383,6 +1400,27 @@ ${conclusion}
       return Promise.reject(error);
     }
   }
+
+  // Fetch quota on mount and when sign-in state changes
+  useEffect(() => {
+    const fetchQuota = async () => {
+      try {
+        const res = await fetch('/api/quota', { method: 'GET', credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setQuota(data);
+          setQuotaError(false);
+        } else {
+          setQuotaError(true);
+        }
+      } catch {
+        setQuotaError(true);
+      }
+    };
+    if (isSignedIn) {
+      fetchQuota();
+    }
+  }, [isSignedIn]);
   
   // Questions organized by sections
   const sections: Record<SectionType, Question[]> = {
@@ -2113,6 +2151,19 @@ ${conclusion}
             <p className="mt-2 text-muted-foreground">
               Create a customized AI policy for your educational institution
             </p>
+            {isSignedIn && (
+              <div className="mt-3 text-sm text-muted-foreground">
+                {quota ? (
+                  <span>
+                    Generations remaining: <b>{quota.remaining}</b> / {quota.limit}
+                  </span>
+                ) : quotaError ? (
+                  <span>Quota unavailable</span>
+                ) : (
+                  <span>Checking quota…</span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Progress indicator */}
@@ -2216,8 +2267,9 @@ ${conclusion}
                   className="w-full" 
                   size="lg" 
                   onClick={startProcess}
+                  disabled={quota !== null && quota.remaining <= 0}
                 >
-                  Start Creating Your Policy
+                  {quota !== null && quota.remaining <= 0 ? 'Generation Limit Reached' : 'Start Creating Your Policy'}
                 </Button>
               </CardFooter>
             </Card>
