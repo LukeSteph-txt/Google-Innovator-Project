@@ -19,6 +19,55 @@ import { geoCentroid } from "d3-geo";
 import { toast } from "sonner";
 import { useAuth, useClerk } from "@clerk/nextjs";
 
+// Clean, accurate full-screen loading overlay with real progress tracking
+const FullScreenLoader = ({ message, progress, elapsedTime }: { message: string; progress: number; elapsedTime: number }) => {
+  const estimatedTotalTime = 120; // 120 seconds maximum
+  const timeProgress = Math.min((elapsedTime / estimatedTotalTime) * 100, 95); // Cap at 95% until actually complete
+  const actualProgress = Math.min(progress, timeProgress);
+  
+  return (
+    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="text-center space-y-8 max-w-xl mx-auto px-6">
+        {/* Simple loading dots */}
+        <div className="flex justify-center space-x-2">
+          <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
+          <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+          <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+        </div>
+        
+        {/* Simple progress bar */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>Progress</span>
+            <span>{Math.round(actualProgress)}%</span>
+          </div>
+          <div className="w-full bg-primary/10 rounded-full h-2 overflow-hidden">
+            <div 
+              className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${actualProgress}%` }}
+            ></div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {Math.floor(elapsedTime)}s elapsed
+          </div>
+        </div>
+        
+        {/* Fixed-size message display */}
+        <div className="space-y-3">
+          <h2 className="text-2xl font-semibold text-primary">
+            Generating Your AI Policy
+          </h2>
+          <div className="h-16 flex items-center justify-center">
+            <p className="text-lg text-muted-foreground max-w-lg">
+              {message}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // List of US states for dropdown
 const usStates = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", 
@@ -678,6 +727,8 @@ export default function PolicyGenerator() {
   // State for API response
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingElapsedTime, setLoadingElapsedTime] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editedPolicy, setEditedPolicy] = useState("");
   
@@ -696,7 +747,20 @@ export default function PolicyGenerator() {
 
   async function generatePolicy() {
     setLoading(true);
+    setLoadingProgress(0);
+    setLoadingElapsedTime(0);
+    
     try {
+      const startTime = Date.now();
+      let currentProgress = 0;
+      
+      const updateProgress = (increment: number) => {
+        currentProgress = Math.min(currentProgress + increment, 95); // Cap at 95% until complete
+        setLoadingProgress(currentProgress);
+      };
+      
+      updateProgress(3); // Initial setup
+      
       // Add uploaded documents to the context
       const uploadedDocsContext = uploadedDocuments.map(doc => 
         `Document "${doc.filename}":\n${doc.content}`
@@ -1285,6 +1349,8 @@ Our ultimate goal is to enhance learning experiences and promote positive outcom
         generateSection("Accountability & Enforcement", accountabilityPrompt, accountabilityExample),
         generateSection("Conclusion", conclusionPrompt, conclusionExample)
       ]);
+      
+      updateProgress(75); // Sections complete
 
       // Combine all sections
       const combinedPolicy = `
@@ -1368,6 +1434,8 @@ ${conclusion}
         Return ONLY the final, polished policy document without any additional commentary or explanations.
       `;
 
+      updateProgress(90); // Starting final proofing
+      
       const proofingResponse = await fetch('/api/openai', {
         method: 'POST',
         headers: {
@@ -1386,6 +1454,41 @@ ${conclusion}
       if (proofingData.content) {
         setResponse(proofingData.content);
         setEditedPolicy(proofingData.content);
+        
+        // Smooth acceleration phase - speed up progress for 5 seconds
+        const accelerationDuration = 5000; // 5 seconds
+        const startProgress = 90; // Current progress
+        const targetProgress = 100;
+        const startTime = Date.now();
+        
+        const accelerateProgress = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(
+            startProgress + (elapsed / accelerationDuration) * (targetProgress - startProgress),
+            targetProgress
+          );
+          
+          setLoadingProgress(progress);
+          
+          if (progress < targetProgress) {
+            requestAnimationFrame(accelerateProgress);
+          }
+        };
+        
+        // Start acceleration phase
+        if ((window as any).startLoadingAcceleration) {
+          (window as any).startLoadingAcceleration();
+        }
+        
+        // Start acceleration
+        requestAnimationFrame(accelerateProgress);
+        
+        // Set loading to false after acceleration completes
+        setTimeout(() => {
+          setLoading(false);
+        }, accelerationDuration);
+        
+        return Promise.resolve();
       } else if (proofingData.error) {
         setResponse(`Error during final proofing: ${proofingData.error}`);
         setEditedPolicy(`Error during final proofing: ${proofingData.error}`);
@@ -1688,26 +1791,114 @@ ${conclusion}
     });
   };
 
-  // Effect for rotating loading messages
+  // Accurate loading progress tracking with elapsed time
   useEffect(() => {
     if (loading) {
+      const startTime = Date.now();
+      
+      // 30 realistic messages that follow the actual policy generation process
       const messages = [
-        "Analyzing school details...",
-        "Generating school policy...",
-        "Refining GenAI policy...",
-        "Finalizing details...",
-        "Styling the policy..."
+        // Initial Analysis Phase (0-20s)
+        "Analyzing your school's unique requirements...",
+        "Processing demographic and geographic data...",
+        "Evaluating current technology infrastructure...",
+        "Assessing AI literacy levels across staff and students...",
+        "Reviewing uploaded documents and context...",
+        
+        // Research Phase (20-40s)
+        "Researching current AI policies and best practices...",
+        "Gathering insights from educational AI implementations...",
+        "Analyzing successful policy frameworks...",
+        "Reviewing compliance requirements and guidelines...",
+        "Studying emerging AI trends in education...",
+        
+        // Framework Design Phase (40-60s)
+        "Designing policy structure and sections...",
+        "Creating introduction and rationale framework...",
+        "Defining permitted use guidelines...",
+        "Establishing prohibited use boundaries...",
+        "Outlining staff training commitments...",
+        
+        // Content Generation Phase (60-80s)
+        "Generating introduction and rationale section...",
+        "Crafting permitted use guidelines...",
+        "Developing prohibited use policies...",
+        "Creating staff training framework...",
+        "Writing privacy and transparency guidelines...",
+        
+        // Specialized Sections Phase (80-100s)
+        "Addressing bias and accessibility concerns...",
+        "Incorporating environmental impact considerations...",
+        "Establishing accountability and enforcement measures...",
+        "Drafting conclusion and implementation guidance...",
+        "Ensuring policy coherence and flow...",
+        
+        // Finalization Phase (100-120s)
+        "Proofreading and formatting document...",
+        "Adding follow-up annotations for customization...",
+        "Incorporating survey link references...",
+        "Adding document link annotations...",
+        "Finalizing policy for download and implementation..."
       ];
       
-      let currentIndex = 0;
-      setLoadingMessage(messages[currentIndex]);
+      // Acceleration phase messages (faster cycling)
+      const accelerationMessages = [
+        "Finalizing document formatting...",
+        "Preparing policy for download...",
+        "Completing final quality checks...",
+        "Ready to display your policy..."
+      ];
       
-      const interval = setInterval(() => {
-        currentIndex = (currentIndex + 1) % messages.length;
-        setLoadingMessage(messages[currentIndex]);
-      }, 7000); // Change message every 7 seconds
+      let messageIndex = 0;
+      let isAccelerating = false;
+      setLoadingMessage(messages[messageIndex]);
       
-      return () => clearInterval(interval);
+      // Update elapsed time every second
+      const timeInterval = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        setLoadingElapsedTime(elapsed);
+      }, 1000);
+      
+      // Cycle through messages every 4 seconds with some variation
+      const messageInterval = setInterval(() => {
+        if (isAccelerating) {
+          // Faster message cycling during acceleration
+          messageIndex = (messageIndex + 1) % accelerationMessages.length;
+          setLoadingMessage(accelerationMessages[messageIndex]);
+        } else {
+          // Normal message cycling
+          messageIndex = (messageIndex + 1) % messages.length;
+          setLoadingMessage(messages[messageIndex]);
+        }
+      }, isAccelerating ? 1000 : 4000); // Faster during acceleration
+      
+      // Function to start acceleration phase
+      const startAcceleration = () => {
+        isAccelerating = true;
+        messageIndex = 0;
+        setLoadingMessage(accelerationMessages[0]);
+        // Clear and restart interval with faster timing
+        clearInterval(messageInterval);
+        const fastInterval = setInterval(() => {
+          messageIndex = (messageIndex + 1) % accelerationMessages.length;
+          setLoadingMessage(accelerationMessages[messageIndex]);
+        }, 1000);
+        
+        return () => clearInterval(fastInterval);
+      };
+      
+      // Expose acceleration function globally so generatePolicy can call it
+      (window as any).startLoadingAcceleration = startAcceleration;
+      
+      return () => {
+        clearInterval(timeInterval);
+        clearInterval(messageInterval);
+        delete (window as any).startLoadingAcceleration;
+      };
+    } else {
+      // Reset when loading stops
+      setLoadingElapsedTime(0);
+      setLoadingProgress(0);
     }
   }, [loading]);
 
@@ -1760,7 +1951,11 @@ ${conclusion}
           >
             {loading ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                <div className="flex space-x-1 mr-2">
+                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
                 Generating Policy...
               </div>
             ) : (
@@ -1958,7 +2153,11 @@ ${conclusion}
           >
             {loading ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                <div className="flex space-x-1 mr-2">
+                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
                 Generating Policy...
               </div>
             ) : (
@@ -2084,7 +2283,11 @@ ${conclusion}
           <Navbar />
           <div className="container max-w-5xl py-10">
             <div className="flex items-center justify-center min-h-[400px]">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-primary"></div>
+              <div className="flex space-x-2">
+                <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
+                <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              </div>
             </div>
           </div>
         </div>
@@ -2140,6 +2343,9 @@ ${conclusion}
 
   return (
     <div className="relative min-h-screen">
+      {/* Full-screen loading overlay */}
+      {loading && <FullScreenLoader message={loadingMessage} progress={loadingProgress} elapsedTime={loadingElapsedTime} />}
+      
       {/* Background gradients */}
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
@@ -2356,13 +2562,7 @@ ${conclusion}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <div className="flex flex-col items-center justify-center py-20">
-                    <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-primary mb-6"></div>
-                    <p className="text-xl font-medium text-primary">{loadingMessage}</p>
-                  </div>
-                ) : (
-                  <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert" ref={policyRef}>
+                <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert" ref={policyRef}>
                     {isEditing ? (
                       <Textarea
                         value={editedPolicy}
@@ -2393,7 +2593,6 @@ ${conclusion}
                       </ReactMarkdown>
                     )}
                   </div>
-                )}
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button 
