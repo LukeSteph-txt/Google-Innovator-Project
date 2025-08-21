@@ -38,20 +38,24 @@ const usStates = [
 //   "Maryland", "Virginia", "North Carolina", "South Carolina", "Georgia", "Florida"
 // ];
 
-const greenStates = ["Alabama", "Florida", "Georgia", "Hawaii"];
+const greenStates = ["Alabama", "Florida", "Georgia", "Hawaii", "Massachusetts"];
+
 const yellowStates = [
   "California", "Colorado", "Connecticut", "Delaware", "Indiana", "Kentucky", "Louisiana",
   "Maine", "Minnesota", "Mississippi", "Missouri", "Nevada", "New Mexico", "North Carolina",
   "North Dakota", "Ohio", "Oklahoma", "Oregon", "Utah", "Virginia", "Washington",
   "West Virginia", "Wisconsin", "Wyoming"
 ];
+
 const redStates = [
   // All states not in greenStates or yellowStates
   "Alaska", "Arizona", "Arkansas", "Idaho", "Illinois", "Iowa", "Kansas", "Maryland",
   "Massachusetts", "Michigan", "Montana", "Nebraska", "New Hampshire", "New Jersey",
+  "Michigan", "Montana", "Nebraska", "New Hampshire", "New Jersey",
   "New York", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee",
   "Texas", "Vermont"
 ];
+
 // const yellowStates = [
 //   "Alaska", "Hawaii", "Arizona", "New Mexico", "Texas", "Louisiana", "Mississippi", 
 //   "Alabama", "Tennessee", "Kentucky", "West Virginia", "Ohio", "Indiana", "Illinois", 
@@ -1338,7 +1342,7 @@ ${conclusion}
         - If a sentence strongly aligns with an uploaded document (e.g., "MissionStatement.txt" says "equity is a core value"), annotate it like this:
           {{DocLink (MissionStatement.txt|This sentence reflects the core value of equity from your mission statement)}} The policy prioritizes equity in AI access. {{/DocLink}}
         
-        You must include at least two SurveyLink and two DocLink annotations if possible, in addition to the three Follow Up tags.
+        You must try to include multiple SurveyLink and DocLink annotations per paragraph, in addition to the Follow Up tags. The more annotations the better, but ensure each are relevant to the paragraph and quality annotations.
         
         Please:
         1. Ensure consistent formatting throughout the document
@@ -1493,7 +1497,7 @@ ${conclusion}
         type: 'regular',
         options: ["Never", "Once in a while", "At least once a week", "Daily"],
         setter: setStaffGenAIFrequency
-      }
+      } 
     ],
     studentAIUsage: [
       {
