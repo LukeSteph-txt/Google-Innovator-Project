@@ -529,6 +529,85 @@ function preprocessFollowUpTags(md: string) {
   return md;
 }
 
+// Function to strip all formatting tags for PDF generation
+function stripFormattingTags(md: string) {
+  // First, decode HTML entities
+  const decodeHtmlEntities = (text: string) => {
+    const entities: Record<string, string> = {
+      '&quot;': '"',
+      '&amp;': '&',
+      '&lt;': '<',
+      '&gt;': '>',
+      '&apos;': "'",
+      '&nbsp;': ' '
+    };
+    return text.replace(/&[a-zA-Z]+;/g, (match) => entities[match] || match);
+  };
+  
+  // Remove all {{Follow Up (question)}} ... {{/Follow Up}} tags, keeping only the content
+  md = md.replace(/\{\{Follow Up \([^)]*\)\}\}([\s\S]*?)\{\{\/Follow Up\}\}/g, (_match, content) => {
+    return String(content).replace(/^\s*\.\.\./, '').replace(/\.\.\.\s*$/, '').trim();
+  });
+  
+  // Remove all {{SurveyLink (explanation|section)}} ... {{/SurveyLink}} tags, keeping only the content
+  md = md.replace(/\{\{SurveyLink \([^)]*\)\}\}([\s\S]*?)\{\{\/SurveyLink\}\}/g, (_match, content) => {
+    return String(content).trim();
+  });
+  
+  // Remove all {{DocLink (filename|explanation)}} ... {{/DocLink}} tags, keeping only the content
+  md = md.replace(/\{\{DocLink \([^)]*\)\}\}([\s\S]*?)\{\{\/DocLink\}\}/g, (_match, content) => {
+    return String(content).trim();
+  });
+  
+  // Clean up any extra whitespace that might have been created by tag removal
+  md = md.replace(/\n\s*\n\s*\n/g, '\n\n'); // Replace multiple blank lines with double blank lines
+  
+  // Remove any remaining HTML tags that might have been created by the preprocessing
+  md = md.replace(/<followup[^>]*>(.*?)<\/followup>/g, '$1');
+  md = md.replace(/<surveylink[^>]*>(.*?)<\/surveylink>/g, '$1');
+  md = md.replace(/<doclink[^>]*>(.*?)<\/doclink>/g, '$1');
+  
+  // Remove common HTML tags that might appear inside content
+  md = md.replace(/<strong>(.*?)<\/strong>/g, '$1');
+  md = md.replace(/<b>(.*?)<\/b>/g, '$1');
+  md = md.replace(/<em>(.*?)<\/em>/g, '$1');
+  md = md.replace(/<i>(.*?)<\/i>/g, '$1');
+  md = md.replace(/<code>(.*?)<\/code>/g, '$1');
+  md = md.replace(/<pre>(.*?)<\/pre>/g, '$1');
+  md = md.replace(/<p>(.*?)<\/p>/g, '$1');
+  md = md.replace(/<br\s*\/?>/g, '\n');
+  md = md.replace(/<hr\s*\/?>/g, '\n---\n');
+  
+  // Handle markdown formatting that should be preserved but cleaned
+  // Convert **bold** to regular text (remove bold formatting)
+  md = md.replace(/\*\*(.*?)\*\*/g, '$1');
+  
+  // Convert *italic* to regular text (remove italic formatting) - but be careful with list markers
+  // Process italic formatting more carefully to avoid affecting list markers
+  // First, temporarily replace list markers with a unique placeholder
+  md = md.replace(/^(\s*)(\*|\+|\-)\s/gm, '$1__LIST_MARKER_STAR__ ');
+  // Now remove italic formatting
+  md = md.replace(/\*(.*?)\*/g, '$1');
+  // Restore list markers
+  md = md.replace(/__LIST_MARKER_STAR__/g, '*');
+  
+  // Convert `code` to regular text (remove code formatting)
+  md = md.replace(/`(.*?)`/g, '$1');
+  
+  // Decode HTML entities
+  md = decodeHtmlEntities(md);
+  
+  // Clean up any extra whitespace that might have been created
+  md = md.replace(/\s+$/gm, ''); // Remove trailing whitespace from each line
+  
+  // Add proper spacing between sections
+  md = md.replace(/^(#{1,3}\s+.+)$/gm, '\n$1'); // Add blank line before headings
+  md = md.replace(/\n\n\n+/g, '\n\n'); // Normalize multiple blank lines to double
+  md = md.replace(/^\n+/, ''); // Remove leading blank lines
+  
+  return md;
+}
+
 // Custom FollowUp highlight component
 const FollowUp = ({ comment, children }: { comment: string, children: React.ReactNode }) => (
   <span
@@ -1388,19 +1467,21 @@ ${conclusion}
       const proofingSystemPrompt = `
         You are an expert editor specializing in educational policy documents. Your task is to proofread, format, and refine the provided AI policy document.
         
-        IMPORTANT: Under no circumstances should the name of the school, district, or any specific institution be mentioned in the final policy document, even if it appears in uploaded documents or examples. Remove or replace any such names with generic terms like [Your School Name] or [Your District Name].
+        IMPORTANT: Under no circumstances should the name of the school, district, or any specific institution be mentioned in the final policy document, even if it appears in uploaded documents or examples. Remove or replace any such names with generic terms like [Your School Name] or [Your District Name]. Please make sure to annotate EACH instance of the school/district name using the FollowUp Tag below.
         
-        1. Identify the three sentences in the final policy that would most benefit from user customization or review. For each, annotate the sentence using the following exact tag format:
+        1. Identify many sentences (1-2 at a time) in the final policy that would most benefit from user customization or review. For each, annotate the sentence using the following exact tag format:
         {{Follow Up (Your specific question for the user about customizing this sentence)}} ...policy text... {{/Follow Up}}
         The question in parentheses should be specific to what the user should consider or review for that sentence. Only annotate three sentences in total, and only those that are most likely to require user input or local adaptation.
         
         2. For any sentence or section that is directly influenced by a specific survey answer, annotate it using:
         {{SurveyLink (explanation|section)}} ...policy text... {{/SurveyLink}}
         Where 'explanation' is a brief note on how the survey answer affected the policy, and 'section' is the policy section name (e.g., "Commitment to Staff Training").
+        There should hopefully be at least 1 SurveyLink annotation per paragraph, but ensure there are at least 10 over the policy (the more quality ones the better).
         
-        3. For two sentences or sections that strongly align with the content of any uploaded document, annotate them using:
+        3. For sentences that strongly align with the content of any uploaded document, annotate them using:
         {{DocLink (filename|explanation)}} ...policy text... {{/DocLink}}
         Where 'filename' is the name of the uploaded document, and 'explanation' is a brief note on how the content aligns.
+        There should hopefully be 1 DocLink annotation per section, but ensure there are at least 5 over the policy (the more quality ones the better), if the user uploaded documents.
         
         EXAMPLES:
         - If a sentence is directly influenced by a survey answer (e.g., "Staff AI literacy is low"), annotate it like this:
@@ -1409,6 +1490,7 @@ ${conclusion}
           {{DocLink (MissionStatement.txt|This sentence reflects the core value of equity from your mission statement)}} The policy prioritizes equity in AI access. {{/DocLink}}
         
         You must try to include multiple SurveyLink and DocLink annotations per paragraph, in addition to the Follow Up tags. The more annotations the better, but ensure each are relevant to the paragraph and quality annotations.
+        There can only be 1 annotation per sentence, so SurveyLink, DocLink and FollowUp annotations cannot be on the same sentence(s).
         
         Please:
         1. Ensure consistent formatting throughout the document
@@ -1418,6 +1500,7 @@ ${conclusion}
         5. Make sure all sections are properly formatted with appropriate headings
         6. Remove any redundant information
         7. Ensure the policy is clear, professional, and actionable
+        8. Try to place as many SurveyLink, DocLink and FollowUp annotations as possible, while ensuring they are relevant to the sentence and quality annotations.
         
         FORMATTING REQUIREMENTS:
         - Use Markdown formatting for proper document structure
@@ -1971,6 +2054,14 @@ ${conclusion}
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Check file size (10MB limit)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      alert(`File size exceeds the limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB. Please choose a smaller file.`);
+      event.target.value = '';
+      return;
+    }
+
     setIsUploading(true);
     try {
       let textContent: string;
@@ -1979,32 +2070,46 @@ ${conclusion}
       if (file.type === 'application/pdf') {
         // Only run in the browser
         if (typeof window !== 'undefined') {
-          // Load PDF.js from CDN if not already loaded
-          // @ts-ignore
-          if (!window.pdfjsLib) {
-            await new Promise((resolve, reject) => {
-              const script = document.createElement('script');
-              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-              script.onload = resolve;
-              script.onerror = reject;
-              document.body.appendChild(script);
-            });
-          }
-          // @ts-ignore
-          const pdfjsLib = window.pdfjsLib;
-          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          try {
+            // Load PDF.js from CDN if not already loaded
+            // @ts-ignore
+            if (!window.pdfjsLib) {
+              await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Failed to load PDF.js library'));
+                document.body.appendChild(script);
+              });
+            }
+            
+            // @ts-ignore
+            const pdfjsLib = window.pdfjsLib;
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          let text = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            const strings = content.items.map((item: any) => item.str);
-            text += strings.join(' ') + '\n';
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let text = '';
+            
+            // Limit to first 10 pages to prevent timeouts
+            const maxPages = Math.min(pdf.numPages, 10);
+            for (let i = 1; i <= maxPages; i++) {
+              const page = await pdf.getPage(i);
+              const content = await page.getTextContent();
+              const strings = content.items.map((item: any) => item.str);
+              text += strings.join(' ') + '\n';
+            }
+            
+            if (pdf.numPages > 10) {
+              text += `\n[Note: Only first 10 pages were processed. Total pages: ${pdf.numPages}]`;
+            }
+            
+            textContent = text;
+            fileName = fileName.replace(/\.pdf$/i, '.txt');
+          } catch (pdfError) {
+            console.error('PDF parsing error:', pdfError);
+            throw new Error(`Failed to parse PDF: ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}`);
           }
-          textContent = text;
-          fileName = fileName.replace(/\.pdf$/i, '.txt');
         } else {
           throw new Error('PDF parsing is only supported in the browser.');
         }
@@ -2032,24 +2137,26 @@ ${conclusion}
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to upload file');
         } else {
-          throw new Error('Server returned non-JSON response');
+          const errorText = await response.text();
+          throw new Error(`Server error: ${response.status} - ${errorText}`);
         }
       }
 
       const data = await response.json();
-      setUploadedDocuments(prev => [...prev, {
-        filename: fileName,
-        content: data.content
-      }]);
+      
+      if (data.success) {
+        setUploadedDocuments(prev => [...prev, {
+          filename: fileName,
+          content: data.content
+        }]);
+        toast.success(`Successfully uploaded ${fileName}`);
+      } else {
+        throw new Error(data.error || 'Upload failed');
+      }
     } catch (error) {
       console.error('Error uploading file:', error);
-      if (error instanceof Error) {
-        alert(error.message);
-      } else if (typeof error === 'object' && error !== null) {
-        alert(JSON.stringify(error));
-      } else {
-        alert('Failed to upload file: ' + String(error));
-      }
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload file';
+      toast.error(`Upload failed: ${errorMessage}`);
     } finally {
       setIsUploading(false);
       event.target.value = '';
@@ -2065,14 +2172,38 @@ ${conclusion}
       <div className="flex items-center justify-center w-full">
         <label
           htmlFor="file-upload"
-          className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+          className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+            isUploading 
+              ? 'border-blue-300 bg-blue-50 cursor-not-allowed' 
+              : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+          }`}
         >
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
-            <Upload className="w-8 h-8 mb-4 text-gray-500" />
+            {isUploading ? (
+              <div className="flex space-x-2 mb-4">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              </div>
+            ) : (
+              <Upload className="w-8 h-8 mb-4 text-gray-500" />
+            )}
             <p className="mb-2 text-sm text-gray-500">
-              <span className="font-semibold">Click to upload</span> or drag and drop
+              {isUploading ? (
+                <span className="font-semibold text-blue-600">Processing file...</span>
+              ) : (
+                <span className="font-semibold">Click to upload</span>
+              )}
+              {!isUploading && ' or drag and drop'}
             </p>
-            <p className="text-xs text-gray-500">PDF or TXT files</p>
+            <p className="text-xs text-gray-500">
+              PDF or TXT files (max 10MB)
+            </p>
+            {isUploading && (
+              <p className="text-xs text-blue-600 mt-2">
+                Please wait while we process your file...
+              </p>
+            )}
           </div>
           <input
             id="file-upload"
@@ -2084,6 +2215,18 @@ ${conclusion}
           />
         </label>
       </div>
+      
+      {/* File upload tips */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="text-sm font-medium text-blue-800 mb-2">Upload Tips:</h4>
+        <ul className="text-xs text-blue-700 space-y-1">
+          <li>• PDF files will be converted to text automatically</li>
+          <li>• Only the first 10 pages of PDFs will be processed</li>
+          <li>• Maximum file size is 10MB</li>
+          <li>• Supported formats: .pdf, .txt</li>
+        </ul>
+      </div>
+      
       {uploadedDocuments.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-medium">Uploaded Documents:</h3>
@@ -2091,12 +2234,19 @@ ${conclusion}
             {uploadedDocuments.map((doc) => (
               <li
                 key={doc.filename}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
               >
-                <span className="text-sm truncate">{doc.filename}</span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-800">{doc.filename}</span>
+                  <span className="text-xs text-green-600">
+                    ({Math.round(doc.content.length / 1024)}KB)
+                  </span>
+                </div>
                 <button
                   onClick={() => removeDocument(doc.filename)}
-                  className="p-1 hover:bg-gray-200 rounded"
+                  className="p-1 hover:bg-green-200 rounded text-green-600 hover:text-green-800 transition-colors"
+                  title="Remove document"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2675,7 +2825,11 @@ ${conclusion}
                                 // Main title
                                 pdf.setFontSize(18);
                                 pdf.setFont('helvetica', 'bold');
-                                const title = line.substring(2).trim();
+                                let title = line.substring(2).trim();
+                                // Clean the title of any markdown formatting
+                                title = title.replace(/\*\*(.*?)\*\*/g, '$1');
+                                title = title.replace(/\*(.*?)\*/g, '$1');
+                                title = title.replace(/`(.*?)`/g, '$1');
                                 pdf.text(title, pageWidth / 2, currentY, { align: 'center' });
                                 currentY += 0.4;
                                 currentFontSize = 12;
@@ -2684,7 +2838,11 @@ ${conclusion}
                                 // Section heading
                                 pdf.setFontSize(14);
                                 pdf.setFont('helvetica', 'bold');
-                                const heading = line.substring(3).trim();
+                                let heading = line.substring(3).trim();
+                                // Clean the heading of any markdown formatting
+                                heading = heading.replace(/\*\*(.*?)\*\*/g, '$1');
+                                heading = heading.replace(/\*(.*?)\*/g, '$1');
+                                heading = heading.replace(/`(.*?)`/g, '$1');
                                 pdf.text(heading, margin, currentY);
                                 currentY += 0.3;
                                 currentFontSize = 12;
@@ -2693,7 +2851,11 @@ ${conclusion}
                                 // Subsection heading
                                 pdf.setFontSize(12);
                                 pdf.setFont('helvetica', 'bold');
-                                const subheading = line.substring(4).trim();
+                                let subheading = line.substring(4).trim();
+                                // Clean the subheading of any markdown formatting
+                                subheading = subheading.replace(/\*\*(.*?)\*\*/g, '$1');
+                                subheading = subheading.replace(/\*(.*?)\*/g, '$1');
+                                subheading = subheading.replace(/`(.*?)`/g, '$1');
                                 pdf.text(subheading, margin, currentY);
                                 currentY += 0.25;
                                 currentFontSize = 12;
@@ -2702,7 +2864,12 @@ ${conclusion}
                                 // Bullet points
                                 pdf.setFontSize(currentFontSize);
                                 pdf.setFont('helvetica', currentFontStyle);
-                                const bulletText = line.substring(2).trim();
+                                let bulletText = line.substring(2).trim();
+                                
+                                // Clean the bullet text of any markdown formatting
+                                bulletText = bulletText.replace(/\*\*(.*?)\*\*/g, '$1');
+                                bulletText = bulletText.replace(/\*(.*?)\*/g, '$1');
+                                bulletText = bulletText.replace(/`(.*?)`/g, '$1');
                                 
                                 // Draw bullet point
                                 pdf.text('•', margin + 0.1, currentY);
@@ -2741,7 +2908,12 @@ ${conclusion}
                                 pdf.setFontSize(currentFontSize);
                                 pdf.setFont('helvetica', currentFontStyle);
                                 const number = line.substring(0, 2);
-                                const listText = line.substring(3).trim();
+                                let listText = line.substring(3).trim();
+                                
+                                // Clean the list text of any markdown formatting
+                                listText = listText.replace(/\*\*(.*?)\*\*/g, '$1');
+                                listText = listText.replace(/\*(.*?)\*/g, '$1');
+                                listText = listText.replace(/`(.*?)`/g, '$1');
                                 
                                 // Draw number
                                 pdf.text(number, margin + 0.1, currentY);
@@ -2784,8 +2956,15 @@ ${conclusion}
                                   currentY = margin;
                                 }
                                 
+                                // Clean the line of any remaining markdown formatting
+                                let cleanLine = line;
+                                // Remove any remaining bold/italic formatting that might have slipped through
+                                cleanLine = cleanLine.replace(/\*\*(.*?)\*\*/g, '$1');
+                                cleanLine = cleanLine.replace(/\*(.*?)\*/g, '$1');
+                                cleanLine = cleanLine.replace(/`(.*?)`/g, '$1');
+                                
                                 // Split text into words to handle wrapping
-                                const words = line.split(' ');
+                                const words = cleanLine.split(' ');
                                 let lineText = '';
                                 
                                 for (let j = 0; j < words.length; j++) {
@@ -2813,8 +2992,10 @@ ${conclusion}
                             }
                           };
                           
-                          // Process the Markdown content - use the edited policy if in edit mode
-                          processMarkdown(isEditing ? editedPolicy : response);
+                          // Process the Markdown content - use the edited policy if in edit mode, and strip formatting tags for PDF
+                          const contentToProcess = isEditing ? editedPolicy : response;
+                          const cleanContent = stripFormattingTags(contentToProcess);
+                          processMarkdown(cleanContent);
                           
                           // Save the PDF
                           pdf.save('AI_Policy_Document.pdf');

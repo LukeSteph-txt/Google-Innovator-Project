@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 
 export const config = {
   api: {
     bodyParser: false,
   },
 };
+
+// File size limit (10MB)
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
   console.log('Received upload request');
@@ -33,11 +34,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only allow text files for now
-    if (file.type !== 'text/plain') {
-      console.log('Invalid file type:', file.type);
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      console.log('File too large:', file.size, 'bytes');
       return new NextResponse(
-        JSON.stringify({ error: 'Only .txt files are supported at this time.' }),
+        JSON.stringify({ error: `File size exceeds limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB` }),
         { 
           status: 400,
           headers: {
@@ -47,20 +48,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Create uploads directory if it doesn't exist
-    const uploadDir = join(process.cwd(), 'uploads');
-    try {
-      await mkdir(uploadDir, { recursive: true });
-      console.log('Created uploads directory');
-    } catch (error) {
-      console.error('Error creating uploads directory:', error);
+    // Allow both text files and PDFs (PDFs will be converted to text on the client side)
+    if (file.type !== 'text/plain' && file.type !== 'application/pdf') {
+      console.log('Invalid file type:', file.type);
       return new NextResponse(
-        JSON.stringify({ error: 'Failed to create upload directory', details: String(error) }),
+        JSON.stringify({ error: 'Only .txt and .pdf files are supported.' }),
         { 
-          status: 500,
+          status: 400,
           headers: {
             'Content-Type': 'application/json',
           },
@@ -68,34 +62,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save the file
-    const filePath = join(uploadDir, file.name);
+    // Process file content in memory only
     try {
-      await writeFile(filePath, buffer);
-      console.log('File saved successfully');
-    } catch (error) {
-      console.error('Error saving file:', error);
-      return new NextResponse(
-        JSON.stringify({ error: 'Failed to save file', details: String(error) }),
-        { 
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-    }
-
-    // Read and extract text from the file
-    try {
-      const text = buffer.toString('utf-8');
+      let text: string;
+      
+      if (file.type === 'application/pdf') {
+        // For PDFs, we'll return a placeholder since PDF parsing happens on the client
+        text = `[PDF file: ${file.name} - Content will be extracted on the client side]`;
+      } else {
+        // For text files, read the content directly
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        text = buffer.toString('utf-8');
+      }
+      
       console.log('Text extracted successfully');
       
       const response = new NextResponse(
         JSON.stringify({ 
           success: true,
           filename: file.name,
-          content: text
+          content: text,
+          fileType: file.type,
+          fileSize: file.size
         }),
         { 
           status: 200,
