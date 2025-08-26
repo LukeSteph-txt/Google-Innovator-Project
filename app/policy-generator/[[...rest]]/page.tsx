@@ -808,6 +808,7 @@ export default function PolicyGenerator() {
   const [loading, setLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingElapsedTime, setLoadingElapsedTime] = useState(0);
+  const [pdfLoading, setPdfLoading] = useState(false);
   
   // State for current section and question
   const [section, setSection] = useState<SectionType>('landing');
@@ -2808,232 +2809,84 @@ ${conclusion}
                     onClick={async () => {
                       // Download as PDF
                       if (policyRef.current) {
+                        setPdfLoading(true);
                         try {
-                          // Dynamically import the libraries
-                          const { jsPDF } = await import('jspdf');
+                          // Use html2pdf.js for more reliable PDF generation
+                          const html2pdf = (await import('html2pdf.js')).default;
                           
-                          // Create a new PDF document
-                          const pdf = new jsPDF({
-                            orientation: 'portrait',
-                            unit: 'in',
-                            format: 'letter'
-                          });
+                          // Create a temporary container for the PDF content
+                          const tempContainer = document.createElement('div');
+                          tempContainer.className = 'pdf-container';
+                          tempContainer.style.padding = '20px';
+                          tempContainer.style.maxWidth = '100%';
+                          tempContainer.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                          tempContainer.style.backgroundColor = 'white';
+                          tempContainer.style.color = 'black';
                           
-                          // Set margins - increase bottom margin to ensure text doesn't hit the bottom
-                          const margin = 1; // Increased from 0.5 to 0.75 inches
-                          const pageWidth = pdf.internal.pageSize.getWidth();
-                          const pageHeight = pdf.internal.pageSize.getHeight();
-                          const contentWidth = pageWidth - (2 * margin);
-                          const contentHeight = pageHeight - (2 * margin); // Define content height with margins
-                          
-                          // Set font
-                          pdf.setFont('helvetica');
-                          
-                          // Process the Markdown content to extract text and structure
-                          const processMarkdown = (markdown: string) => {
-                            // Split by lines
-                            const lines = markdown.split('\n');
-                            let currentY = margin;
-                            let currentFontSize = 12;
-                            let currentFontStyle = 'normal';
-                            
-                            // Process each line
-                            for (let i = 0; i < lines.length; i++) {
-                              const line = lines[i].trim();
-                              
-                              // Skip empty lines
-                              if (!line) {
-                                currentY += 0.2; // Add some spacing
-                                continue;
-                              }
-                              
-                              // Check for headings
+                          // Convert markdown to HTML for the PDF
+                          const cleanContent = stripFormattingTags(response);
+                          tempContainer.innerHTML = cleanContent
+                            .split('\n')
+                            .map(line => {
                               if (line.startsWith('# ')) {
-                                // Main title
-                                pdf.setFontSize(18);
-                                pdf.setFont('helvetica', 'bold');
-                                let title = line.substring(2).trim();
-                                // Clean the title of any markdown formatting
-                                title = title.replace(/\*\*(.*?)\*\*/g, '$1');
-                                title = title.replace(/\*(.*?)\*/g, '$1');
-                                title = title.replace(/`(.*?)`/g, '$1');
-                                pdf.text(title, pageWidth / 2, currentY, { align: 'center' });
-                                currentY += 0.4;
-                                currentFontSize = 12;
-                                currentFontStyle = 'normal';
+                                return `<h1 style="text-align: center; margin-bottom: 1.5rem; color: #000; font-size: 24px; font-weight: bold;">${line.substring(2).trim()}</h1>`;
                               } else if (line.startsWith('## ')) {
-                                // Section heading
-                                pdf.setFontSize(14);
-                                pdf.setFont('helvetica', 'bold');
-                                let heading = line.substring(3).trim();
-                                // Clean the heading of any markdown formatting
-                                heading = heading.replace(/\*\*(.*?)\*\*/g, '$1');
-                                heading = heading.replace(/\*(.*?)\*/g, '$1');
-                                heading = heading.replace(/`(.*?)`/g, '$1');
-                                pdf.text(heading, margin, currentY);
-                                currentY += 0.3;
-                                currentFontSize = 12;
-                                currentFontStyle = 'normal';
+                                return `<h2 style="margin-top: 2rem; margin-bottom: 1rem; color: #000; font-size: 20px; font-weight: bold;">${line.substring(3).trim()}</h2>`;
                               } else if (line.startsWith('### ')) {
-                                // Subsection heading
-                                pdf.setFontSize(12);
-                                pdf.setFont('helvetica', 'bold');
-                                let subheading = line.substring(4).trim();
-                                // Clean the subheading of any markdown formatting
-                                subheading = subheading.replace(/\*\*(.*?)\*\*/g, '$1');
-                                subheading = subheading.replace(/\*(.*?)\*/g, '$1');
-                                subheading = subheading.replace(/`(.*?)`/g, '$1');
-                                pdf.text(subheading, margin, currentY);
-                                currentY += 0.25;
-                                currentFontSize = 12;
-                                currentFontStyle = 'normal';
+                                return `<h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; color: #000; font-size: 16px; font-weight: bold;">${line.substring(4).trim()}</h3>`;
                               } else if (line.startsWith('* ') || line.startsWith('- ')) {
-                                // Bullet points
-                                pdf.setFontSize(currentFontSize);
-                                pdf.setFont('helvetica', currentFontStyle);
-                                let bulletText = line.substring(2).trim();
-                                
-                                // Clean the bullet text of any markdown formatting
-                                bulletText = bulletText.replace(/\*\*(.*?)\*\*/g, '$1');
-                                bulletText = bulletText.replace(/\*(.*?)\*/g, '$1');
-                                bulletText = bulletText.replace(/`(.*?)`/g, '$1');
-                                
-                                // Draw bullet point
-                                pdf.text('•', margin + 0.1, currentY);
-                                
-                                // Handle text wrapping for bullet points
-                                const bulletIndent = 0.3; // Indent for bullet point text
-                                const bulletContentWidth = contentWidth - bulletIndent;
-                                
-                                // Split text into words to handle wrapping
-                                const words = bulletText.split(' ');
-                                let lineText = '';
-                                let firstLine = true;
-                                
-                                for (let j = 0; j < words.length; j++) {
-                                  const testLine = lineText + words[j] + ' ';
-                                  const textWidth = pdf.getStringUnitWidth(testLine) * currentFontSize / 72;
-                                  
-                                  if (textWidth > bulletContentWidth && j > 0) {
-                                    // Draw the current line
-                                    pdf.text(lineText, margin + bulletIndent, currentY);
-                                    currentY += 0.2;
-                                    lineText = words[j] + ' ';
-                                    firstLine = false;
-                                  } else {
-                                    lineText = testLine;
-                                  }
-                                }
-                                
-                                // Draw the last line
-                                pdf.text(lineText, margin + bulletIndent, currentY);
-                                currentY += 0.25;
+                                return `<li style="margin-bottom: 0.5rem; margin-left: 20px;">• ${line.substring(2).trim()}</li>`;
                               } else if (line.startsWith('1. ') || line.startsWith('2. ') || line.startsWith('3. ') || 
                                         line.startsWith('4. ') || line.startsWith('5. ') || line.startsWith('6. ') || 
                                         line.startsWith('7. ') || line.startsWith('8. ') || line.startsWith('9. ')) {
-                                // Numbered lists
-                                pdf.setFontSize(currentFontSize);
-                                pdf.setFont('helvetica', currentFontStyle);
-                                const number = line.substring(0, 2);
-                                let listText = line.substring(3).trim();
-                                
-                                // Clean the list text of any markdown formatting
-                                listText = listText.replace(/\*\*(.*?)\*\*/g, '$1');
-                                listText = listText.replace(/\*(.*?)\*/g, '$1');
-                                listText = listText.replace(/`(.*?)`/g, '$1');
-                                
-                                // Draw number
-                                pdf.text(number, margin + 0.1, currentY);
-                                
-                                // Handle text wrapping for numbered lists
-                                const listIndent = 0.3; // Indent for list text
-                                const listContentWidth = contentWidth - listIndent;
-                                
-                                // Split text into words to handle wrapping
-                                const words = listText.split(' ');
-                                let lineText = '';
-                                let firstLine = true;
-                                
-                                for (let j = 0; j < words.length; j++) {
-                                  const testLine = lineText + words[j] + ' ';
-                                  const textWidth = pdf.getStringUnitWidth(testLine) * currentFontSize / 72;
-                                  
-                                  if (textWidth > listContentWidth && j > 0) {
-                                    // Draw the current line
-                                    pdf.text(lineText, margin + listIndent, currentY);
-                                    currentY += 0.2;
-                                    lineText = words[j] + ' ';
-                                    firstLine = false;
-                                  } else {
-                                    lineText = testLine;
-                                  }
-                                }
-                                
-                                // Draw the last line
-                                pdf.text(lineText, margin + listIndent, currentY);
-                                currentY += 0.25;
+                                return `<li style="margin-bottom: 0.5rem; margin-left: 20px;">${line.substring(0, 2)} ${line.substring(3).trim()}</li>`;
+                              } else if (line.trim()) {
+                                return `<p style="margin-bottom: 1rem; line-height: 1.6; color: #000;">${line.trim()}</p>`;
                               } else {
-                                // Regular paragraph
-                                pdf.setFontSize(currentFontSize);
-                                pdf.setFont('helvetica', currentFontStyle);
-                                
-                                // Check if we need to start a new page
-                                if (currentY > pageHeight - margin) {
-                                  pdf.addPage();
-                                  currentY = margin;
-                                }
-                                
-                                // Clean the line of any remaining markdown formatting
-                                let cleanLine = line;
-                                // Remove any remaining bold/italic formatting that might have slipped through
-                                cleanLine = cleanLine.replace(/\*\*(.*?)\*\*/g, '$1');
-                                cleanLine = cleanLine.replace(/\*(.*?)\*/g, '$1');
-                                cleanLine = cleanLine.replace(/`(.*?)`/g, '$1');
-                                
-                                // Split text into words to handle wrapping
-                                const words = cleanLine.split(' ');
-                                let lineText = '';
-                                
-                                for (let j = 0; j < words.length; j++) {
-                                  const testLine = lineText + words[j] + ' ';
-                                  const textWidth = pdf.getStringUnitWidth(testLine) * currentFontSize / 72;
-                                  
-                                  if (textWidth > contentWidth && j > 0) {
-                                    pdf.text(lineText, margin, currentY);
-                                    currentY += 0.2;
-                                    lineText = words[j] + ' ';
-                                  } else {
-                                    lineText = testLine;
-                                  }
-                                }
-                                
-                                pdf.text(lineText, margin, currentY);
-                                currentY += 0.25;
+                                return '<br>';
                               }
-                              
-                              // Check if we need to start a new page - ensure we have enough space for at least one more line
-                              if (currentY > pageHeight - margin - 0.3) {
-                                pdf.addPage();
-                                currentY = margin;
-                              }
+                            })
+                            .join('');
+                          
+                          // Add the container to the document temporarily
+                          document.body.appendChild(tempContainer);
+                          
+                          // Configure html2pdf options
+                          const options = {
+                            margin: [0.5, 0.5, 0.5, 0.5],
+                            filename: 'AI_Policy_Document.pdf',
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: { 
+                              scale: 2,
+                              useCORS: true,
+                              letterRendering: true,
+                              backgroundColor: '#ffffff'
+                            },
+                            jsPDF: { 
+                              unit: 'in', 
+                              format: 'letter', 
+                              orientation: 'portrait' as const,
+                              compress: true
                             }
                           };
                           
-                          // Process the Markdown content and strip formatting tags for PDF
-                          const cleanContent = stripFormattingTags(response);
-                          processMarkdown(cleanContent);
+                          // Generate PDF
+                          await html2pdf().from(tempContainer).set(options).save();
                           
-                          // Save the PDF
-                          pdf.save('AI_Policy_Document.pdf');
+                          // Clean up
+                          document.body.removeChild(tempContainer);
                         } catch (error) {
                           console.error("Error generating PDF:", error);
                           alert("There was an error generating the PDF. Please try again.");
+                        } finally {
+                          setPdfLoading(false);
                         }
                       }
                     }}
+                    disabled={pdfLoading}
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    Download as PDF
+                    {pdfLoading ? "Generating PDF..." : "Download as PDF"}
                   </Button>
                 </div>
               </CardFooter>
