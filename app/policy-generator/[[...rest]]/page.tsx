@@ -8,9 +8,9 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import ReactMarkdown from 'react-markdown';
-import { Download, RefreshCw, ArrowLeft, Edit, Save, Upload, X } from "lucide-react";
+import { Download, RefreshCw, ArrowLeft, Upload, X } from "lucide-react";
 import Navbar from "@/components/navbar";
-import { Textarea } from "@/components/ui/textarea";
+
 import Footer from "@/components/footer";
 import React, { Fragment } from 'react';
 import rehypeRaw from 'rehype-raw';
@@ -808,8 +808,6 @@ export default function PolicyGenerator() {
   const [loading, setLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingElapsedTime, setLoadingElapsedTime] = useState(0);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedPolicy, setEditedPolicy] = useState("");
   
   // State for current section and question
   const [section, setSection] = useState<SectionType>('landing');
@@ -1013,7 +1011,7 @@ export default function PolicyGenerator() {
           let priorityDetails = [];
   
           switch(criticalPriority) {
-            case "Academic Dishonesty among Students":
+            case "Academic Honesty among Students":
               priorityDetails.push("Policy emphasizes robust academic integrity measures.");
               break;
             case "Data security and privacy for all users within the organization":
@@ -1141,6 +1139,9 @@ export default function PolicyGenerator() {
         - Staff AI Literacy: ${staffAILiteracy}
         - Student AI Literacy: ${studentAILiteracy}
         
+        UPLOADED DOCUMENTS:
+        ${uploadedDocsContext}
+        
         CONTEXTUAL INSIGHTS:
         ${policyContext.deviceContext}
         ${policyContext.literacyContext}
@@ -1154,6 +1155,7 @@ export default function PolicyGenerator() {
         - Consider the device access patterns and capabilities
         - Address AI literacy levels across different groups
         - Include state-specific considerations for ${state}
+        - Incorporate relevant elements from any uploaded documents
         
         IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
@@ -1165,6 +1167,9 @@ export default function PolicyGenerator() {
         - State: ${state}
         - Critical Priority: ${criticalPriority}
         
+        UPLOADED DOCUMENTS:
+        ${uploadedDocsContext}
+        
         Generate the Prohibited Use section of the AI policy. This section should:
         - Clearly outline what uses of AI are prohibited
         - Address academic integrity concerns
@@ -1173,6 +1178,7 @@ export default function PolicyGenerator() {
         - Tailor the prohibited uses to the specific age group (${ageGroup})
         - Address the specific critical priority (${criticalPriority})
         - Include state-specific considerations for ${state}
+        - Incorporate relevant elements from any uploaded documents
         
         IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
@@ -1186,6 +1192,9 @@ export default function PolicyGenerator() {
         - Staff AI Literacy: ${staffAILiteracy}
         - Critical Priority: ${criticalPriority}
         
+        UPLOADED DOCUMENTS:
+        ${uploadedDocsContext}
+        
         Generate the Commitment to Staff Training section of the AI policy. This section should:
         - Outline the school's commitment to training staff on AI usage
         - Describe the types of training that will be provided
@@ -1195,6 +1204,7 @@ export default function PolicyGenerator() {
         - Address the current AI literacy levels
         - Address the specific critical priority (${criticalPriority})
         - Include state-specific considerations for ${state}
+        - Incorporate relevant elements from any uploaded documents
         
         IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most leaders," "some staff," "limited literacy," etc.
       `;
@@ -1206,6 +1216,9 @@ export default function PolicyGenerator() {
         - State: ${state}
         - Critical Priority: ${criticalPriority}
         
+        UPLOADED DOCUMENTS:
+        ${uploadedDocsContext}
+        
         Generate the Privacy & Transparency section of the AI policy. This section should:
         - Address data privacy concerns
         - Outline disclosure rules
@@ -1214,6 +1227,7 @@ export default function PolicyGenerator() {
         - Tailor privacy considerations to the specific age group (${ageGroup})
         - Address the specific critical priority (${criticalPriority})
         - Include state-specific privacy regulations for ${state}
+        - Incorporate relevant elements from any uploaded documents
         
         IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
@@ -1227,6 +1241,9 @@ export default function PolicyGenerator() {
         - Staff Device Access: ${staffDevicePercentage}
         - Student Device Access: ${studentDevicePercentage}
         
+        UPLOADED DOCUMENTS:
+        ${uploadedDocsContext}
+        
         Generate the Bias & Accessibility section of the AI policy. This section should:
         - Address potential bias in AI tools
         - Outline strategies for ensuring equitable access
@@ -1235,6 +1252,7 @@ export default function PolicyGenerator() {
         - Tailor bias considerations to the specific age group (${ageGroup})
         - Address device access disparities
         - Include state-specific considerations for ${state}
+        - Incorporate relevant elements from any uploaded documents
         
         IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
@@ -1247,6 +1265,9 @@ export default function PolicyGenerator() {
         - Environmental Awareness: ${environmentalAwareness}
         - Critical Priority: ${criticalPriority}
         
+        UPLOADED DOCUMENTS:
+        ${uploadedDocsContext}
+        
         Generate the Environmental Impact section of the AI policy. This section should:
         - Address the environmental impact of AI technologies
         - Outline strategies for minimizing carbon footprint
@@ -1256,6 +1277,7 @@ export default function PolicyGenerator() {
         - Address the level of environmental awareness (${environmentalAwareness})
         - Include specific commitments based on critical priority (${criticalPriority})
         - Include state-specific environmental considerations for ${state}
+        - Incorporate relevant elements from any uploaded documents
         
         IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
@@ -1267,6 +1289,9 @@ export default function PolicyGenerator() {
         - State: ${state}
         - Critical Priority: ${criticalPriority}
         
+        UPLOADED DOCUMENTS:
+        ${uploadedDocsContext}
+        
         Generate the Accountability & Enforcement section of the AI policy. This section should:
         - Outline how the policy will be enforced
         - Describe the roles and responsibilities of different stakeholders
@@ -1275,6 +1300,7 @@ export default function PolicyGenerator() {
         - Tailor accountability measures to the specific age group (${ageGroup})
         - Address the specific critical priority (${criticalPriority})
         - Include state-specific considerations for ${state}
+        - Incorporate relevant elements from any uploaded documents
         
         IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
@@ -1295,6 +1321,9 @@ export default function PolicyGenerator() {
         - Environmental Awareness: ${environmentalAwareness}
         - Critical Priority: ${criticalPriority}
         
+        UPLOADED DOCUMENTS:
+        ${uploadedDocsContext}
+        
         CONTEXTUAL INSIGHTS:
         ${policyContext.locationContext}
         ${policyContext.deviceContext}
@@ -1312,6 +1341,7 @@ export default function PolicyGenerator() {
         - Mention the level of AI literacy across different groups
         - Include environmental considerations based on awareness level
         - Emphasize the critical priority identified
+        - Incorporate relevant elements from any uploaded documents
         
         IMPORTANT: Do not use specific percentages or numbers in the policy. Instead, use qualitative language like "most students," "some staff," "limited access," etc.
       `;
@@ -1464,6 +1494,9 @@ ${conclusion}
       `;
 
       // Final proofing and formatting
+      const hasUploadedDocuments = uploadedDocuments.length > 0;
+      const uploadedDocumentsList = uploadedDocuments.map(doc => doc.filename).join(', ');
+      
       const proofingSystemPrompt = `
         You are an expert editor specializing in educational policy documents. Your task is to proofread, format, and refine the provided AI policy document.
         
@@ -1478,18 +1511,31 @@ ${conclusion}
         Where 'explanation' is a brief note on how the survey answer affected the policy, and 'section' is the policy section name (e.g., "Commitment to Staff Training").
         There should hopefully be at least 1 SurveyLink annotation per paragraph, but ensure there are at least 10 over the policy (the more quality ones the better).
         
+        ${hasUploadedDocuments ? `
         3. For sentences that strongly align with the content of any uploaded document, annotate them using:
         {{DocLink (filename|explanation)}} ...policy text... {{/DocLink}}
         Where 'filename' is the name of the uploaded document, and 'explanation' is a brief note on how the content aligns.
-        There should hopefully be 1 DocLink annotation per section, but ensure there are at least 5 over the policy (the more quality ones the better), if the user uploaded documents.
+        There should hopefully be 1 DocLink annotation per section, but ensure there are at least 5 over the policy (the more quality ones the better).
+        
+        UPLOADED DOCUMENTS: ${uploadedDocumentsList}
+        
+        UPLOADED DOCUMENTS CONTENT:
+        ${uploadedDocsContext}
         
         EXAMPLES:
         - If a sentence is directly influenced by a survey answer (e.g., "Staff AI literacy is low"), annotate it like this:
           {{SurveyLink (This section was added because you indicated staff AI literacy is low|Commitment to Staff Training)}} Staff will receive additional AI training days. {{/SurveyLink}}
         - If a sentence strongly aligns with an uploaded document (e.g., "MissionStatement.txt" says "equity is a core value"), annotate it like this:
           {{DocLink (MissionStatement.txt|This sentence reflects the core value of equity from your mission statement)}} The policy prioritizes equity in AI access. {{/DocLink}}
+        ` : `
+        3. DO NOT create any DocLink annotations since no documents were uploaded by the user.
         
-        You must try to include multiple SurveyLink and DocLink annotations per paragraph, in addition to the Follow Up tags. The more annotations the better, but ensure each are relevant to the paragraph and quality annotations.
+        EXAMPLES:
+        - If a sentence is directly influenced by a survey answer (e.g., "Staff AI literacy is low"), annotate it like this:
+          {{SurveyLink (This section was added because you indicated staff AI literacy is low|Commitment to Staff Training)}} Staff will receive additional AI training days. {{/SurveyLink}}
+        `}
+        
+        You must try to include multiple SurveyLink annotations per paragraph, in addition to the Follow Up tags. ${hasUploadedDocuments ? 'Also include DocLink annotations where appropriate.' : 'Do not include any DocLink annotations.'} The more annotations the better, but ensure each are relevant to the paragraph and quality annotations.
         There can only be 1 annotation per sentence, so SurveyLink, DocLink and FollowUp annotations cannot be on the same sentence(s).
         
         Please:
@@ -1500,7 +1546,7 @@ ${conclusion}
         5. Make sure all sections are properly formatted with appropriate headings
         6. Remove any redundant information
         7. Ensure the policy is clear, professional, and actionable
-        8. Try to place as many SurveyLink, DocLink and FollowUp annotations as possible, while ensuring they are relevant to the sentence and quality annotations.
+        8. Try to place as many SurveyLink and FollowUp annotations as possible, while ensuring they are relevant to the sentence and quality annotations. ${hasUploadedDocuments ? 'Also, include DocLink annotations where appropriate, but ensure they are all accurate and reliable based on the documents.' : ''}
         
         FORMATTING REQUIREMENTS:
         - Use Markdown formatting for proper document structure
@@ -1536,7 +1582,6 @@ ${conclusion}
       
       if (proofingData.content) {
         setResponse(proofingData.content);
-        setEditedPolicy(proofingData.content);
         
         // Smooth acceleration phase - speed up progress for 5 seconds
         const accelerationDuration = 5000; // 5 seconds
@@ -1574,10 +1619,8 @@ ${conclusion}
         return Promise.resolve();
       } else if (proofingData.error) {
         setResponse(`Error during final proofing: ${proofingData.error}`);
-        setEditedPolicy(`Error during final proofing: ${proofingData.error}`);
       } else {
         setResponse("No valid response received during final proofing.");
-        setEditedPolicy("No valid response received during final proofing.");
       }
       
       // Return a resolved promise to indicate success
@@ -1585,7 +1628,6 @@ ${conclusion}
     } catch (error) {
       console.error("Error generating policy:", error);
       setResponse("An error occurred while generating the policy. Please try again.");
-      setEditedPolicy("An error occurred while generating the policy. Please try again.");
       // Return a rejected promise to indicate failure
       return Promise.reject(error);
     }
@@ -1722,7 +1764,7 @@ ${conclusion}
         question: "What is the most critical item that you want the policy to address? (Select a maximum of two)",
         type: 'regular',
         options: [
-          "Academic Dishonesty among Students",
+          "Academic Honesty among Students",
           "Data security and privacy for all users within the organization",
           "Environmental Impact",
           "Basic Legal Compliance",
@@ -1821,19 +1863,7 @@ ${conclusion}
     return question !== null && 'type' in question && question.type === 'dropdown';
   };
 
-  // Function to handle policy editing
-  const handleEditToggle = () => {
-    if (isEditing) {
-      // Save changes
-      setResponse(editedPolicy);
-    }
-    setIsEditing(!isEditing);
-  };
 
-  // Function to handle policy text changes
-  const handlePolicyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditedPolicy(e.target.value);
-  };
 
   // Function to handle priority selection
   const handlePrioritySelection = (priority: string) => {
@@ -2708,41 +2738,32 @@ ${conclusion}
                 <CardTitle>Your AI Policy</CardTitle>
                 <CardDescription>
                   Based on your responses, we've generated a customized AI policy for your educational institution.
-                  {!isEditing ? " You can edit the policy before downloading." : " Edit the policy below."}
+                  You can download the policy in PDF or text format.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert" ref={policyRef}>
-                    {isEditing ? (
-                      <Textarea
-                        value={editedPolicy}
-                        onChange={handlePolicyChange}
-                        className="min-h-[500px] font-mono text-sm"
-                        placeholder="Edit your policy here..."
-                      />
-                    ) : (
-                      <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{
-                        ...( {
-                          followup({ node, children, ...props }: any) {
-                            const comment = node.properties?.comment || '';
-                            return <FollowUp comment={comment}>{children}</FollowUp>;
-                          },
-                          surveylink({ node, children, ...props }: any) {
-                            const explanation = node.properties?.explanation || '';
-                            const section = node.properties?.section || '';
-                            return <SurveyLink explanation={explanation} section={section}>{children}</SurveyLink>;
-                          },
-                          doclink({ node, children, ...props }: any) {
-                            const filename = node.properties?.filename || '';
-                            const explanation = node.properties?.explanation || '';
-                            return <DocLink filename={filename} explanation={explanation}>{children}</DocLink>;
-                          },
-                        } as any )
-                      }}>
-                        {preprocessFollowUpTags(response)}
-                      </ReactMarkdown>
-                    )}
-                  </div>
+                  <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{
+                    ...( {
+                      followup({ node, children, ...props }: any) {
+                        const comment = node.properties?.comment || '';
+                        return <FollowUp comment={comment}>{children}</FollowUp>;
+                      },
+                      surveylink({ node, children, ...props }: any) {
+                        const explanation = node.properties?.explanation || '';
+                        const section = node.properties?.section || '';
+                        return <SurveyLink explanation={explanation} section={section}>{children}</SurveyLink>;
+                      },
+                      doclink({ node, children, ...props }: any) {
+                        const filename = node.properties?.filename || '';
+                        const explanation = node.properties?.explanation || '';
+                        return <DocLink filename={filename} explanation={explanation}>{children}</DocLink>;
+                      },
+                    } as any )
+                  }}>
+                    {preprocessFollowUpTags(response)}
+                  </ReactMarkdown>
+                </div>
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button 
@@ -2752,8 +2773,6 @@ ${conclusion}
                     setSection("landing");
                     setQuestionIndex(0);
                     setResponse("");
-                    setEditedPolicy("");
-                    setIsEditing(false);
                     setSelectedPriorities([]);
                   }}
                 >
@@ -2763,19 +2782,27 @@ ${conclusion}
                 <div className="flex gap-2">
                   <Button 
                     variant="outline"
-                    onClick={handleEditToggle}
+                    onClick={async () => {
+                      // Download as TXT
+                      try {
+                        const cleanContent = stripFormattingTags(response);
+                        const blob = new Blob([cleanContent], { type: 'text/plain' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'AI_Policy_Document.txt';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                      } catch (error) {
+                        console.error("Error generating TXT:", error);
+                        alert("There was an error generating the TXT file. Please try again.");
+                      }
+                    }}
                   >
-                    {isEditing ? (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Changes
-                      </>
-                    ) : (
-                      <>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Policy
-                      </>
-                    )}
+                    <Download className="mr-2 h-4 w-4" />
+                    Download as TXT
                   </Button>
                   <Button 
                     onClick={async () => {
@@ -2992,9 +3019,8 @@ ${conclusion}
                             }
                           };
                           
-                          // Process the Markdown content - use the edited policy if in edit mode, and strip formatting tags for PDF
-                          const contentToProcess = isEditing ? editedPolicy : response;
-                          const cleanContent = stripFormattingTags(contentToProcess);
+                          // Process the Markdown content and strip formatting tags for PDF
+                          const cleanContent = stripFormattingTags(response);
                           processMarkdown(cleanContent);
                           
                           // Save the PDF
@@ -3007,7 +3033,7 @@ ${conclusion}
                     }}
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    Download Policy
+                    Download as PDF
                   </Button>
                 </div>
               </CardFooter>

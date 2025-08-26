@@ -4,10 +4,8 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_OPENAI_API_KEY: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
   },
-  // Add experimental features for better file handling
-  experimental: {
-    serverComponentsExternalPackages: ['pdf-parse'],
-  },
+  // Add server external packages for better file handling
+  serverExternalPackages: ['pdf-parse'],
   // Configure API routes for file uploads
   async headers() {
     return [

@@ -39,9 +39,9 @@ export async function POST(request: NextRequest) {
         { role: "system", content: systemPrompt },
         { role: "user", content: prompt }
       ],
-      temperature: 1,
-      max_tokens: 25000,
-      top_p: 0.4,
+      temperature: 0.4,
+      max_tokens: 30000,
+      top_p: 0.8,
       frequency_penalty: 0,
       presence_penalty: 0,
     });
